@@ -18,6 +18,11 @@ import Data.Ord  (comparing, Down(..))
 -- | =======================================================================
 -- | 1. Chen et al. — Item Response Theory (IRT)
 -- | =======================================================================
+-- | Chen, C. M., Liu, C. Y., & Chang, M. H. (2006).
+-- | Personalized curriculum sequencing utilizing modified item response
+-- | theory for web-based instruction.
+-- | Expert Systems with Applications, 30(2), 378-396.
+-- | DOI: https://doi.org/10.1016/j.eswa.2005.07.029
 -- | Recommends items whose difficulty best matches the learner's estimated
 -- | ability (theta). The learner may choose which item to attempt.
 
@@ -70,8 +75,12 @@ service_irt  =  recommend
 
 
 -- | =======================================================================
--- | 2. Nguyen et al. — Collaborative Filtering (CF)
+-- | 2. Nguyen et al. -- Collaborative Filtering (CF)
 -- | =======================================================================
+-- | Nguyen, V. A., Nguyen, H. H., Nguyen, D. L., & Le, M. D. (2021).
+-- | A course recommendation model for students based on learning outcome.
+-- | Education and Information Technologies, 26(5), 5389-5415.
+-- | DOI: https://doi.org/10.1007/s10639-021-10524-0
 -- | Recommends courses ranked by predicted rating, derived from k nearest
 -- | peer learners. The learner may choose which course to enrol in.
 
@@ -137,10 +146,14 @@ service_cf  =  recommend
 
 
 -- | =======================================================================
--- | 3. Jagan et al. — Latent Dirichlet Allocation (LDA)
+-- | 3. Jagan et al. -- Latent Dirichlet Allocation (LDA)
 -- | =======================================================================
+-- | Jagan, A., Nagarajan, V., & Sathiyamurthy, K. (2017).
+-- | Latent Dirichlet allocation based behavior identification system
+-- | for personalized E-content generation.
 -- | Recommends resources ranked by topic similarity to the learner's
 -- | inferred behavioural topic mixture. The learner may choose which to access.
+     DOI: 10.1166/jctn.2016.5956
 
 data LDAModel = LDAModel { topicDistributions :: [[Double]]
                          , numTopics          :: Int
@@ -189,8 +202,14 @@ service_lda  =  recommend
 
 
 -- | =======================================================================
--- | 4. Rodriguez et al. — Formative Assessment
+-- | 4. Rodriguez-Martinez et al. -- Formative Assessment
 -- | =======================================================================
+-- | Rodriguez-Martinez, J. A., Gonzalez-Calero, J. A., del Olmo-Munoz, J.,
+-- | Arnau, D., & Tirado-Olivares, S. (2023).
+-- | Building personalised homework from a learning analytics based formative
+-- | assessment: Effect on fifth-grade students' understanding of fractions.
+-- | British Journal of Educational Technology, 54(1), 88-108.
+-- | DOI: https://doi.org/10.1111/bjet.13292
 -- | Recommends fraction tasks ranked by weakest skill first, then by
 -- | increasing difficulty. The learner may choose which task to attempt.
 
