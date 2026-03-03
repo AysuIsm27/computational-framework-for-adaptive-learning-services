@@ -5,12 +5,17 @@ import Visualize
 import Data.List (minimumBy)
 import Data.Ord  (comparing)
 
+
 -- | ---------------------------
--- | Visualize Implementation: Alonso-Fernández et al.
+-- | Visualize Implementation: Alonso-Fernandez et al. (2021)
 -- | ---------------------------
--- | T-Mon Monitoring Model.
--- | Aggregates xAPI-SG game traces into per-student clusters and engagement
--- | scores, flags the most at-risk student, and renders a teacher dashboard.
+-- | Data science meets standardized game learning analytics.
+-- | Transforms standardized game traces (like xAPI-SG) into learning insights
+-- | and visualizes them on an analytics dashboard.
+-- |
+-- | Alonso-Fernandez, C., Calvo-Morata, A., Freire, M., & Martinez-Ortiz, I. (2021).
+-- | 2021 IEEE Global Engineering Education Conference (EDUCON).
+-- | DOI: 10.1109/EDUCON46332.2021.9454134
 
 data TMonModel = TMonModel { modelDataTMon :: String
                            } deriving (Show)
