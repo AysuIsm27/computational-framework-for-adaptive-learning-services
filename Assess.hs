@@ -38,11 +38,11 @@ assess input model get_response =
 --   after each round.
 --   The transition function advances the learner state between rounds
 --   (e.g. updating a BKT belief state from the latest mastery estimate).
-assess_battery :: (SelectItem i m item, InterpretResponse i m item response mastery)
+assess_mastery :: (SelectItem i m item, InterpretResponse i m item response mastery)
                => (i -> mastery -> i)  -- ^ Transition: update learner state from mastery estimate
                -> Int                  -- ^ Number of assessment rounds to run
                -> i -> m -> (item -> response) -> [mastery]
-assess_battery transition n input model get_response =
+assess_mastery transition n input model get_response =
   take n (iterate_rounds input)
   where
     iterate_rounds i =
