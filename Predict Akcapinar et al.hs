@@ -6,8 +6,13 @@ import Predict
 -- | ---------------------------
 -- | Predict Implementation: Akcapinar et al.
 -- | ---------------------------
--- | Learning Analytics Prediction Model.
--- | Uses early-course LMS behaviour to predict whether a student will pass.
+-- | Learning Analytics Early-Warning Prediction Model.
+-- | Extracts early-course LMS behavioural features and applies logistic
+-- | regression to predict whether a student will pass the course.
+-- | Akçapınar, G., Altun, A., & Aşkar, P. (2019).
+-- | Using learning analytics to develop early-warning system for at-risk students.
+-- | International Journal of Educational Technology in Higher Education, 16, 40.
+-- | DOI: https://doi.org/10.1186/s41239-019-0172-z
 
 data PredictionModel = PredictionModel { modelWeights :: [Double]
                                        , threshold    :: Double
