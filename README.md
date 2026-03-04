@@ -48,7 +48,7 @@ The code is provided as supplementary material for peer review.
 ## Implementations
 
 - **Visualize Brusilovsky et al.hs**  
-  Implements a visualization service based on the MasteryGrids Open Social Student
+  Implements a visualization service based on the MasteryGrids Open Social Learner
   Modeling system. Renders a dashboard showing a student's own mastery alongside
   peer models and class averages. Demonstrates a visualization service grounded in
   a learner model and a peer-learner model.
