@@ -2,99 +2,79 @@
 module SequenceAhmadalievEtAl where
 
 import Sequence
-import Data.List (sortBy)
-import Data.Ord  (comparing)
 
 -- | ---------------------------
 -- | Sequence Implementation: Ahmadaliev et al.
 -- | ---------------------------
--- | Knowledge-Based Sequencing Model.
--- | The system determines exactly one next activity — the student has no choice.
+-- | Adaptive activity sequencing via weighted overlay user model and
+-- | relaxing-based mathematical programming.
+-- | LO selection is driven by knowledge level y_c = Σ Q_{i,j} × x_{i,j}
+-- | against a fixed MinQ=70 threshold, with learning mode (sensing/intuitive)
+-- | updated by Algorithm 1 (Felder-Silverman perception dimension).
 -- | Ahmadaliev, D., Xiaohui, C., Abduvohidov, M., Medatov, A., & Temirova, G. (2019).
 -- | An adaptive activity sequencing instrument to enhance e-learning.
 -- | 2019 International Conference on Computer and Information Sciences (ICCIS), 1–4.
 -- | DOI: https://doi.org/10.1109/ICCISci.2019.8716473
 
-data SequencingModel = SequencingModel { prerequisiteGraph :: [(Topic, [Topic])]
-                                       , difficultyLevels  :: [(Topic, Int)]
-                                       } deriving (Show)
+-- | Minimum quality pass value: hard-coded in the paper as MinQ = 70.
+minQ :: Double
+minQ = 70.0
 
-newtype Topic = Topic { topicId :: String } deriving (Show, Eq, Ord)
+-- | Learning mode from Felder-Silverman perception dimension (Algorithm 1).
+-- | Sensing:   easy/concrete LOs — default after a fail.
+-- | Intuitive: abstract/challenging LOs (higher award) — default for new user.
+data LearningMode = Sensing | Intuitive deriving (Show, Eq)
 
-data StudentState = StudentState { stateStudentId :: Int
-                                 , masteredTopics :: [Topic]
-                                 , attemptHistory :: [(Topic, Double)]
-                                 } deriving (Show, Eq)
+-- | A Learning Object (LO) as described in the paper (Section III).
+-- | Each LO has: title, content, problem, variant answers (for quiz LOs),
+-- | a weight w assigned by the educator, and a mode (sensing/intuitive).
+-- | Weights per sub-theme sum to 100 (equation 3: Q_i = [lo_{i,:,w}]).
+data LearningObject = LearningObject
+  { loId     :: String       -- ^ identifier
+  , loWeight :: Double       -- ^ weight w; weights in sub-theme sum to 100
+  , loMode   :: LearningMode -- ^ sensing (easy) or intuitive (abstract/challenging)
+  } deriving (Show, Eq)
 
-data LearningActivity = LearningActivity { activityTopic      :: Topic
-                                         , activityDifficulty :: Int
-                                         , activityType       :: ActivityType
-                                         } deriving (Show, Eq)
+-- | Domain model: three-level hierarchy Subject → Theme → Sub-theme → LO (Fig. 1).
+-- | allLOs !! j !! s = list of LOs in theme j, sub-theme s.
+-- | Corresponds to LO_{i,j} and CL_i in equations (1) and (2).
+data SequencingModel = SequencingModel
+  { allLOs :: [[[LearningObject]]] -- ^ theme → sub-theme → [LO]
+  } deriving (Show)
 
-data ActivityType = Explanation | Practice | Quiz deriving (Show, Eq)
+-- | Student state: the weighted overlay user model.
+-- | Tracks CT (taken LOs), y_c (knowledge level), current position,
+-- | and learning mode with comprehension counter (Algorithm 1).
+-- | New user default mode: Intuitive (Algorithm 1, Step 1).
+data StudentState = StudentState
+  { studentId            :: Int
+  , currentTheme         :: Int           -- ^ j index into allLOs
+  , currentSubTheme      :: Int           -- ^ sub-theme index within theme j
+  , takenLOs             :: [String]      -- ^ CT: ids of completed LOs (equation 4)
+  , knowledgeLevel       :: Double        -- ^ y_c = Σ Q_{i,j} * x_{i,j} (equation 6)
+  , learningMode         :: LearningMode  -- ^ Intuitive for new user (Algorithm 1, Step 1)
+  , comprehensionCounter :: Int           -- ^ consecutive passes in sensing; 3 → intuitive
+  } deriving (Show, Eq)
 
--- Looks up the prerequisites for a topic in the knowledge graph.
-prerequisites :: SequencingModel -> Topic -> [Topic]
-prerequisites model topic =
-  case lookup topic (prerequisiteGraph model) of
-    Just ps -> ps
-    Nothing -> []
+-- | DetermineNext instance: implements Algorithm 2 from the paper.
+-- | Step 1: compute y_c over all TokenLOs in CurrentSubTheme (equation 6)
+-- | Step 2: if y_c >= MinQ, advance to next sub-theme (equation 7)
+-- | Step 3/4: collect untaken LOs from CurrentSubTheme
+-- | Step 5: return the LO whose mode matches the student's current learning mode
+instance DetermineNext StudentState SequencingModel LearningObject where
+  determine_next student model = undefined
 
--- Looks up the difficulty level assigned to a topic.
-topicDifficulty :: SequencingModel -> Topic -> Int
-topicDifficulty model topic =
-  case lookup topic (difficultyLevels model) of
-    Just d  -> d
-    Nothing -> 0
+service_sequence :: StudentState -> SequencingModel -> LearningObject
+service_sequence = sequence_activity
 
--- Returns True if every prerequisite of the topic has been mastered.
-prerequisitesMastered :: SequencingModel -> StudentState -> Topic -> Bool
-prerequisitesMastered model student topic =
-  all (`elem` masteredTopics student) (prerequisites model topic)
+-- | Transition: implements Algorithm 1 (evaluate user action) from the paper.
+-- | passed=True:  if mode=Sensing, increment counter; if counter=3 → Intuitive
+-- | passed=False: reset counter to 0, switch mode to Sensing
+-- | Both: add completed LO to takenLOs, update knowledgeLevel y_c
+simulate_learning :: Bool -> StudentState -> LearningObject -> StudentState
+simulate_learning passed student lo = undefined
 
--- The unlocked frontier: topics whose prerequisites are all mastered
--- but which the student has not yet mastered themselves.
-availableTopics :: SequencingModel -> StudentState -> [Topic]
-availableTopics model student =
-  [ t | (t, _) <- prerequisiteGraph model
-      , t `notElem` masteredTopics student
-      , prerequisitesMastered model student t ]
-
--- Retrieves the first activity in the bank that covers a given topic.
-activityForTopic :: [LearningActivity] -> Topic -> LearningActivity
-activityForTopic bank topic =
-  case filter (\a -> activityTopic a == topic) bank of
-    (a:_) -> a
-    []    -> undefined
-
-allActivities :: [LearningActivity]
-allActivities = undefined
-
--- DetermineNext instance: selects the unlocked topic with the lowest
--- difficulty and returns its corresponding learning activity.
-instance DetermineNext StudentState SequencingModel LearningActivity where
-  determine_next student model =
-    let available = availableTopics model student
-        sorted    = sortBy (comparing (topicDifficulty model)) available
-    in  case sorted of
-          (t:_) -> activityForTopic allActivities t
-          []    -> undefined
-
-service_sequence :: StudentState -> SequencingModel -> LearningActivity
-service_sequence =  sequence_activity
-
--- | -----------------------------------------------------------------------
--- | Multi-Step Simulation (Using sequence_path from the Sequence.hs)
--- | -----------------------------------------------------------------------
-
--- | Transition function: updates the student state after completing an activity.
---   This allows sequence_path to calculate the step after this one.
-simulate_learning :: StudentState -> LearningActivity -> StudentState
-simulate_learning state activity = 
-  let completedTopic = activityTopic activity
-  in  state { masteredTopics = completedTopic : masteredTopics state }
-
--- | Generates a multi-step lesson plan of length 'n'
-generate_lesson_plan :: Int -> StudentState -> SequencingModel -> [LearningActivity]
-generate_lesson_plan steps student model = 
-  sequence_path simulate_learning steps student model
+-- | Generates a multi-step lesson plan of length n assuming all LOs are passed.
+generate_lesson_plan :: Int -> StudentState -> SequencingModel -> [LearningObject]
+generate_lesson_plan steps student model =
+  sequence_path (simulate_learning True) steps student model
