@@ -61,11 +61,21 @@ data SkillState = SkillState
 -- | P(Lₙ|incorrect) = P(Lₙ)·P(S)     / [P(Lₙ)·P(S)     + (1−P(Lₙ))·(1−P(G))]
 -- | P(Lₙ₊₁) = P(Lₙ|obs) + (1 − P(Lₙ|obs)) · P(T)
 bktUpdate :: BKTParams -> SkillState -> Bool -> SkillState
-bktUpdate _  _  _ =  undefined
+bktUpdate _ _ _ = undefined
 
 -- ---------------------------------------------------------------------------
--- Self-assessment prompts (View-1, Fig. 2 in the paper)
+-- Product: what the student submits after completing one problem
 -- ---------------------------------------------------------------------------
+
+-- | One attempted solution step, tagged with the KC it exercises.
+-- | Hints and incorrect attempts are tracked separately, as both contribute
+-- | to the assistance score reported in the paper's log data (Table 3).
+data SolutionStep = SolutionStep
+  { stepKC            :: KC
+  , stepCorrect       :: Bool
+  , hintsRequested    :: Int  -- ^ number of hints requested on this step
+  , incorrectAttempts :: Int  -- ^ number of incorrect attempts before correct
+  } deriving (Show)
 
 -- | Prompt 1: confidence rating on a scale from 1 to 7.
 newtype ConfidenceRating = ConfidenceRating { ratingValue :: Int }  -- ^ 1..7
@@ -86,38 +96,48 @@ data SelfAssessmentResponses = SelfAssessmentResponses
   , leastMasteredChoice :: LeastMasteredChoice
   } deriving (Show)
 
+-- | The student product: the level attempted, the solution steps taken,
+--   and the self-assessment responses submitted at the end of the problem.
+data StudentSubmission = StudentSubmission
+  { submissionLevel :: EquationLevel
+  , solutionSteps   :: [SolutionStep]
+  , selfAssessment  :: SelfAssessmentResponses
+  } deriving (Show)
+
 -- ---------------------------------------------------------------------------
--- Input: combined OLM state handed to give_feedback
+-- Model: domain knowledge + learner state
 -- ---------------------------------------------------------------------------
 
--- | Full state at end of one problem.  Combines the system's BKT estimates
--- | with the student's self-assessment responses just submitted.
-data OLMState = OLMState
-  { skillStates          :: [SkillState]
-  , prevSkillStates      :: [SkillState]
+-- | Domain/system model: not student-specific.
+data DomainModel = DomainModel
+  { bktParamsPerKC   :: [(KC, BKTParams)]
+  , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
+  , levelKCMapping   :: [(EquationLevel, [KC])]
+  } deriving (Show)
+
+-- | Learner model: student-specific state, updated after each problem.
+--   Carries both current BKT estimates and the session history needed
+--   to compute the accuracy index.
+data LearnerModel = LearnerModel
+  { skillStates      :: [SkillState]
+  , prevSkillStates  :: [SkillState]
     -- ^ P(Lₙ) values before this problem; for the before/after bar reference
-  , currentLevel         :: EquationLevel
-  , latestSelfAssessment :: SelfAssessmentResponses
-  , priorAssessments     :: [SelfAssessmentResponses]
+  , priorAssessments :: [SelfAssessmentResponses]
     -- ^ all prior responses in this session; for computing accuracy index
   } deriving (Show)
 
--- ---------------------------------------------------------------------------
--- Model: OLM configuration
--- ---------------------------------------------------------------------------
-
+-- | Combined model passed to evaluate_product.
 data OLMModel = OLMModel
-  { bktParamsPerKC   :: [(KC, BKTParams)]
-  , masteryThreshold :: Double                    -- ^ θ: P(Lₙ) ≥ θ → mastered
-  , levelKCMapping   :: [(EquationLevel, [KC])]   -- ^ KCs per equation level
+  { domainModel  :: DomainModel
+  , learnerModel :: LearnerModel
   } deriving (Show)
 
 -- ---------------------------------------------------------------------------
--- Output: OLM feedback shown in View-1 and View-2
+-- Feedback: what the student sees after completing a problem
 -- ---------------------------------------------------------------------------
 
 -- | One bar in the delayed skill-bar reveal (View-1).
--- | Before/after positions shown so the student sees the update as feedback.
+--   Before/after positions shown so the update itself gives feedback.
 data SkillBar = SkillBar
   { barKC      :: KC
   , previousP  :: Double  -- ^ P(Lₙ) before this problem (reference line)
@@ -125,7 +145,7 @@ data SkillBar = SkillBar
   , isMastered :: Bool    -- ^ updatedP ≥ masteryThreshold
   } deriving (Show)
 
--- | Level-level progress entry for View-2.
+-- | Level progress entry for View-2.
 data LevelProgress = LevelProgress
   { progressLevel  :: EquationLevel
   , problemsSolved :: Int
@@ -133,9 +153,9 @@ data LevelProgress = LevelProgress
   } deriving (Show)
 
 -- | Full OLM feedback returned to the student.
--- | View-1: updatedSkillBars (revealed after 1-second delay post prompts).
--- | View-2: levelProgressSummary + recommendedLevel for problem selection.
--- | accuracyIndex: Absolute Accuracy Index (Formula 1) over session history.
+--   View-1: updatedSkillBars (revealed after 1-second delay post prompts).
+--   View-2: levelProgressSummary + recommendedLevel for problem selection.
+--   accuracyIndex: Absolute Accuracy Index (Formula 1) over session history.
 data OLMFeedback = OLMFeedback
   { updatedSkillBars     :: [SkillBar]
   , accuracyIndex        :: Double
@@ -150,47 +170,58 @@ data OLMFeedback = OLMFeedback
 -- ---------------------------------------------------------------------------
 
 -- | Absolute Accuracy Index (Formula 1 in the paper).
--- | c_i ∈ [1,7] rescaled to [0,1]; p_i = P(Lₙ) ∈ [0,1].
+--   c_i ∈ [1,7] rescaled to [0,1]; p_i = P(Lₙ) ∈ [0,1].
 absoluteAccuracyIndex :: [(Double, Double)] -> Double
-absoluteAccuracyIndex _ =  undefined
+absoluteAccuracyIndex _ = undefined
+
+-- | Assistance score for a step: (hints + incorrect attempts) / total steps.
+--   Used in the paper's log data analysis (Table 3).
+assistanceScore :: [SolutionStep] -> Double
+assistanceScore _ = undefined
 
 -- | Build a SkillBar from the before/after SkillState pair.
 buildSkillBar :: Double -> Double -> SkillState -> SkillBar
-buildSkillBar _ _ _ =  undefined
+buildSkillBar _ _ _ = undefined
 
 -- | Compute level progress from current skill states (View-2).
-computeLevelProgress :: OLMModel -> [SkillState] -> [LevelProgress]
-computeLevelProgress _ _ =  undefined
+computeLevelProgress :: DomainModel -> [SkillState] -> [LevelProgress]
+computeLevelProgress _ _ = undefined
 
 -- | Select the lowest unmastered level as the system recommendation.
 selectRecommendedLevel :: [LevelProgress] -> EquationLevel
-selectRecommendedLevel _ =  undefined
+selectRecommendedLevel _ = undefined
 
 -- ---------------------------------------------------------------------------
 -- EvaluateProduct instance
 -- ---------------------------------------------------------------------------
 
-instance EvaluateProduct OLMState OLMModel OLMFeedback where
-  evaluate_product _ _ =  undefined
+instance EvaluateProduct StudentSubmission OLMModel OLMFeedback where
+  evaluate_product _ _ = undefined
 
-service_olm_feedback :: OLMState -> OLMModel -> OLMFeedback
-service_olm_feedback  =  give_feedback
+service_olm_feedback :: StudentSubmission -> OLMModel -> OLMFeedback
+service_olm_feedback = give_feedback
 
 -- ---------------------------------------------------------------------------
 -- Data
 -- ---------------------------------------------------------------------------
 
 example_bkt_params :: BKTParams
-example_bkt_params =  undefined
+example_bkt_params = undefined
+
+example_domain_model :: DomainModel
+example_domain_model = undefined
+
+example_learner_model :: LearnerModel
+example_learner_model = undefined
 
 example_olm_model :: OLMModel
-example_olm_model =  undefined
+example_olm_model = undefined
 
 example_skill_state :: KC -> SkillState
-example_skill_state _ =  undefined
+example_skill_state _ = undefined
 
 example_self_assessment :: SelfAssessmentResponses
-example_self_assessment =  undefined
+example_self_assessment = undefined
 
-example_olm_state :: OLMState
-example_olm_state =  undefined
+example_student_submission :: StudentSubmission
+example_student_submission = undefined
