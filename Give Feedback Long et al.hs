@@ -22,11 +22,14 @@ import GiveFeedback
 -- | (Corbett & Anderson 1994) per KC; mastery is declared at P(Lₙ) ≥ θ.
 -- | Two classroom experiments (N = 302, grades 7–8) confirmed a significant
 -- | OLM effect on post-test scores (Experiment 1: p = .031, η² = .078).
+-- |
+-- |
 
 -- ---------------------------------------------------------------------------
--- Domain: five equation levels (Table 1 in the paper)
+-- Domain
 -- ---------------------------------------------------------------------------
 
+-- | Five equation levels (Table 1 in the paper).
 data EquationLevel
   = Level1   -- ^ x + 5 = 7           (one step)
   | Level2   -- ^ 2x + 1 = 7          (two steps)
@@ -37,8 +40,17 @@ data EquationLevel
 
 newtype KC = KC { kcName :: String } deriving (Show, Eq)
 
+
+--   BKT parameters per KC, the mastery threshold, and the mapping from
+--   equation levels to knowledge components.
+data DomainConfig = DomainConfig
+  { bktParamsPerKC   :: [(KC, BKTParams)]
+  , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
+  , levelKCMapping   :: [(EquationLevel, [KC])]
+  } deriving (Show)
+
 -- ---------------------------------------------------------------------------
--- BKT learner model (Corbett & Anderson 1994)
+-- BKT (Corbett & Anderson 1994)
 -- ---------------------------------------------------------------------------
 
 -- | Four-parameter BKT model per KC.
@@ -64,12 +76,15 @@ bktUpdate :: BKTParams -> SkillState -> Bool -> SkillState
 bktUpdate _ _ _ = undefined
 
 -- ---------------------------------------------------------------------------
--- Product: what the student submits after completing one problem
+-- Product: what the student produces by completing one problem
 -- ---------------------------------------------------------------------------
+-- The product consists of the solution steps the student took, the
+-- self-assessment responses collected at the end of the problem, and
+-- the equation level attempted.
 
 -- | One attempted solution step, tagged with the KC it exercises.
--- | Hints and incorrect attempts are tracked separately, as both contribute
--- | to the assistance score reported in the paper's log data (Table 3).
+--   Hints and incorrect attempts are tracked separately, as both contribute
+--   to the assistance score reported in the paper's log data (Table 3).
 data SolutionStep = SolutionStep
   { stepKC            :: KC
   , stepCorrect       :: Bool
@@ -89,8 +104,9 @@ newtype DeclareMastery = DeclareMastery { declaredMastered :: Bool }
 newtype LeastMasteredChoice = LeastMasteredChoice { chosenKC :: KC }
   deriving (Show, Eq)
 
--- | All three prompt responses, collected sequentially at end of each problem.
-data SelfAssessmentResponses = SelfAssessmentResponses
+-- | All three self-assessment prompt responses, collected sequentially
+--   at the end of each problem.
+data SelfAssessment = SelfAssessment
   { confidenceRating    :: ConfidenceRating
   , declareMastery      :: DeclareMastery
   , leastMasteredChoice :: LeastMasteredChoice
@@ -98,43 +114,39 @@ data SelfAssessmentResponses = SelfAssessmentResponses
 
 -- | The student product: the level attempted, the solution steps taken,
 --   and the self-assessment responses submitted at the end of the problem.
-data StudentSubmission = StudentSubmission
-  { submissionLevel :: EquationLevel
+data StudentProduct = StudentProduct
+  { productLevel    :: EquationLevel
   , solutionSteps   :: [SolutionStep]
-  , selfAssessment  :: SelfAssessmentResponses
+  , selfAssessment  :: SelfAssessment
   } deriving (Show)
 
 -- ---------------------------------------------------------------------------
--- Model: domain knowledge + learner state
+-- Model: student-specific learner state + domain configuration
 -- ---------------------------------------------------------------------------
 
--- | Domain/system model: not student-specific.
-data DomainModel = DomainModel
-  { bktParamsPerKC   :: [(KC, BKTParams)]
-  , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
-  , levelKCMapping   :: [(EquationLevel, [KC])]
-  } deriving (Show)
-
--- | Learner model: student-specific state, updated after each problem.
---   Carries both current BKT estimates and the session history needed
---   to compute the accuracy index.
+-- | Student-specific learner state, updated after each problem.
 data LearnerModel = LearnerModel
   { skillStates      :: [SkillState]
   , prevSkillStates  :: [SkillState]
     -- ^ P(Lₙ) values before this problem; for the before/after bar reference
-  , priorAssessments :: [SelfAssessmentResponses]
-    -- ^ all prior responses in this session; for computing accuracy index
+  , priorAssessments :: [SelfAssessment]
+    -- ^ all prior self-assessment responses in this session;
+    --   for computing accuracy index (Formula 1)
   } deriving (Show)
 
--- | Combined model passed to evaluate_product.
+-- | Combined model: student-specific learner state plus the domain
+--   configuration needed to evaluate the product.
 data OLMModel = OLMModel
-  { domainModel  :: DomainModel
+  { domainConfig :: DomainConfig
   , learnerModel :: LearnerModel
   } deriving (Show)
 
+
 -- ---------------------------------------------------------------------------
--- Feedback: what the student sees after completing a problem
--- ---------------------------------------------------------------------------
+-- After all steps are completed, the OLM shows: (1) updated skill bars
+-- with a before/after comparison (View-1, revealed after the self-
+-- assessment prompts), (2) a level-progress summary with a recommended
+-- next level (View-2), and (3) an accuracy index over the session.
 
 -- | One bar in the delayed skill-bar reveal (View-1).
 --   Before/after positions shown so the update itself gives feedback.
@@ -184,7 +196,7 @@ buildSkillBar :: Double -> Double -> SkillState -> SkillBar
 buildSkillBar _ _ _ = undefined
 
 -- | Compute level progress from current skill states (View-2).
-computeLevelProgress :: DomainModel -> [SkillState] -> [LevelProgress]
+computeLevelProgress :: DomainConfig -> [SkillState] -> [LevelProgress]
 computeLevelProgress _ _ = undefined
 
 -- | Select the lowest unmastered level as the system recommendation.
@@ -195,10 +207,10 @@ selectRecommendedLevel _ = undefined
 -- EvaluateProduct instance
 -- ---------------------------------------------------------------------------
 
-instance EvaluateProduct StudentSubmission OLMModel OLMFeedback where
+instance EvaluateProduct StudentProduct OLMModel OLMFeedback where
   evaluate_product _ _ = undefined
 
-service_olm_feedback :: StudentSubmission -> OLMModel -> OLMFeedback
+service_olm_feedback :: StudentProduct -> OLMModel -> OLMFeedback
 service_olm_feedback = give_feedback
 
 -- ---------------------------------------------------------------------------
@@ -208,8 +220,8 @@ service_olm_feedback = give_feedback
 example_bkt_params :: BKTParams
 example_bkt_params = undefined
 
-example_domain_model :: DomainModel
-example_domain_model = undefined
+example_domain_config :: DomainConfig
+example_domain_config = undefined
 
 example_learner_model :: LearnerModel
 example_learner_model = undefined
@@ -220,8 +232,8 @@ example_olm_model = undefined
 example_skill_state :: KC -> SkillState
 example_skill_state _ = undefined
 
-example_self_assessment :: SelfAssessmentResponses
+example_self_assessment :: SelfAssessment
 example_self_assessment = undefined
 
-example_student_submission :: StudentSubmission
-example_student_submission = undefined
+example_student_product :: StudentProduct
+example_student_product = undefined
