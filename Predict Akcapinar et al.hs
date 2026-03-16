@@ -15,31 +15,34 @@ import Predict
 -- | DOI: https://doi.org/10.1186/s41239-019-0172-z
 
 data PredictionModel = PredictionModel
-  { trainingSet :: [(ActivityLog, Bool)]  -- ^ (log, True=passed)
-  , kNeighbours :: Int                    -- ^ k in kNN
+  { trainingSet :: [(ActivityLog, Outcome)]  -- ^ (log, actual outcome)
+  , kNeighbours :: Int                       -- ^ k in kNN
   } deriving (Show)
 
 data ActivityLog = ActivityLog
-  { logStudentId      :: Int
-  , numSessions       :: Int   -- ^ number of login sessions
-  , resourceViews     :: Int   -- ^ number of resource/material views
-  , forumPosts        :: Int   -- ^ number of forum posts (active)
-  , forumReads        :: Int   -- ^ number of forum reads (passive)
-  , assignmentSubmits :: Int   -- ^ number of assignment submissions
-  , quizAttempts      :: Int   -- ^ number of quiz attempts
+  { logStudentId        :: Int
+  , totalSessionCount   :: Int  -- ^ total number of login sessions
+  , totalSessionTime    :: Int  -- ^ total time spent in environment (minutes)
+  , uniqueSessionDays   :: Int  -- ^ distinct days with a login recorded
+  , totalVisits         :: Int  -- ^ total visits to learning materials
+  , totalPostsCreated   :: Int  -- ^ total number of posts written
+  , uniqueDaysPosted    :: Int  -- ^ distinct days on which posts were written
+  , tagUsedCount        :: Int  -- ^ tags applied to written posts
+  , tagCreatedCount     :: Int  -- ^ new tags created while writing posts
+  , responseCreateCount :: Int  -- ^ responses written in the discussion forum
+  , questionRatingCount :: Int  -- ^ questions rated in the discussion forum
   } deriving (Show, Eq)
 
-data Outcome = Outcome
-  { willPass  :: Bool
-  , riskLevel :: RiskLevel
-  } deriving (Show, Eq)
 
-data RiskLevel = LowRisk | HighRisk deriving (Show, Eq)
+data Outcome = Passed | Failed deriving (Show, Eq)
 
+-- | PredictObservable instance: maps the learner's early-course activity log
+-- | to a predicted pass/fail outcome via kNN, using the 10 features selected
+-- | by the Gini index (Table 10)
 -- | PredictObservable instance: maps the learner's early-course Moodle
 -- | activity log to a predicted pass/fail outcome via kNN.
 instance PredictObservable ActivityLog PredictionModel Outcome where
   predict_result log model = undefined
-
-service_predict :: ActivityLog -> PredictionModel -> Outcome
-service_predict = predict_service
+  
+predict_kNN :: ActivityLog -> PredictionModel -> Outcome
+predict_kNN = predict_service
