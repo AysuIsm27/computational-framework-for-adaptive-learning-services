@@ -23,7 +23,7 @@ import GiveFeedback
 -- | Two classroom experiments (N = 302, grades 7–8) confirmed a significant
 -- | OLM effect on post-test scores (Experiment 1: p = .031, η² = .078).
 -- |
--- |
+
 
 -- ---------------------------------------------------------------------------
 -- Domain
@@ -40,14 +40,20 @@ data EquationLevel
 
 newtype KC = KC { kcName :: String } deriving (Show, Eq)
 
-
---   BKT parameters per KC, the mastery threshold, and the mapping from
---   equation levels to knowledge components.
+-- | System-wide domain configuration: BKT parameters, mastery threshold,
+--   and level-to-KC mapping.  These are constants for the entire deployment
+--   (see note above); they do not vary per student.
 data DomainConfig = DomainConfig
   { bktParamsPerKC   :: [(KC, BKTParams)]
   , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
   , levelKCMapping   :: [(EquationLevel, [KC])]
   } deriving (Show)
+
+-- | The single, shared domain configuration used throughout the system.
+--   Defined here as a top-level constant because DomainConfig does not
+--   depend on any student; see the note at the top of the module.
+domain_config :: DomainConfig
+domain_config = undefined
 
 -- ---------------------------------------------------------------------------
 -- BKT (Corbett & Anderson 1994)
@@ -121,10 +127,12 @@ data StudentProduct = StudentProduct
   } deriving (Show)
 
 -- ---------------------------------------------------------------------------
--- Model: student-specific learner state + domain configuration
+-- Model: student-specific learner state only
 -- ---------------------------------------------------------------------------
 
 -- | Student-specific learner state, updated after each problem.
+--   This is the only per-student data; domain-level constants live in
+--   domain_config at the top level.
 data LearnerModel = LearnerModel
   { skillStates      :: [SkillState]
   , prevSkillStates  :: [SkillState]
@@ -133,14 +141,6 @@ data LearnerModel = LearnerModel
     -- ^ all prior self-assessment responses in this session;
     --   for computing accuracy index (Formula 1)
   } deriving (Show)
-
--- | Combined model: student-specific learner state plus the domain
---   configuration needed to evaluate the product.
-data OLMModel = OLMModel
-  { domainConfig :: DomainConfig
-  , learnerModel :: LearnerModel
-  } deriving (Show)
-
 
 -- ---------------------------------------------------------------------------
 -- After all steps are completed, the OLM shows: (1) updated skill bars
@@ -192,10 +192,13 @@ assistanceScore :: [SolutionStep] -> Double
 assistanceScore _ = undefined
 
 -- | Build a SkillBar from the before/after SkillState pair.
+--   Uses domain_config for the mastery threshold.
 buildSkillBar :: Double -> Double -> SkillState -> SkillBar
 buildSkillBar _ _ _ = undefined
 
 -- | Compute level progress from current skill states (View-2).
+--   Takes DomainConfig explicitly so it can be used in tests with
+--   configs other than domain_config.
 computeLevelProgress :: DomainConfig -> [SkillState] -> [LevelProgress]
 computeLevelProgress _ _ = undefined
 
@@ -207,27 +210,23 @@ selectRecommendedLevel _ = undefined
 -- EvaluateProduct instance
 -- ---------------------------------------------------------------------------
 
-instance EvaluateProduct StudentProduct OLMModel OLMFeedback where
+-- | The model argument is LearnerModel (per-student state only).
+--   Domain-level constants are read from domain_config.
+instance EvaluateProduct StudentProduct LearnerModel OLMFeedback where
   evaluate_product _ _ = undefined
 
-service_olm_feedback :: StudentProduct -> OLMModel -> OLMFeedback
+service_olm_feedback :: StudentProduct -> LearnerModel -> OLMFeedback
 service_olm_feedback = give_feedback
 
 -- ---------------------------------------------------------------------------
--- Data
+-- Example data
 -- ---------------------------------------------------------------------------
 
 example_bkt_params :: BKTParams
 example_bkt_params = undefined
 
-example_domain_config :: DomainConfig
-example_domain_config = undefined
-
 example_learner_model :: LearnerModel
 example_learner_model = undefined
-
-example_olm_model :: OLMModel
-example_olm_model = undefined
 
 example_skill_state :: KC -> SkillState
 example_skill_state _ = undefined
