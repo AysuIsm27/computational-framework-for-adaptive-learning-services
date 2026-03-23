@@ -41,17 +41,14 @@ data EquationLevel
 newtype KC = KC { kcName :: String } deriving (Show, Eq)
 
 -- | System-wide domain configuration: BKT parameters, mastery threshold,
---   and level-to-KC mapping.  These are constants for the entire deployment
---   (see note above); they do not vary per student.
+--   and level-to-KC mapping.  
 data DomainConfig = DomainConfig
   { bktParamsPerKC   :: [(KC, BKTParams)]
   , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
   , levelKCMapping   :: [(EquationLevel, [KC])]
   } deriving (Show)
 
--- | The single, shared domain configuration used throughout the system.
---   Defined here as a top-level constant because DomainConfig does not
---   depend on any student; see the note at the top of the module.
+
 domain_config :: DomainConfig
 domain_config = undefined
 
@@ -131,8 +128,7 @@ data StudentProduct = StudentProduct
 -- ---------------------------------------------------------------------------
 
 -- | Student-specific learner state, updated after each problem.
---   This is the only per-student data; domain-level constants live in
---   domain_config at the top level.
+
 data LearnerModel = LearnerModel
   { skillStates      :: [SkillState]
   , prevSkillStates  :: [SkillState]
@@ -211,7 +207,7 @@ selectRecommendedLevel _ = undefined
 -- ---------------------------------------------------------------------------
 
 -- | The model argument is LearnerModel (per-student state only).
---   Domain-level constants are read from domain_config.
+
 instance EvaluateProduct StudentProduct LearnerModel OLMFeedback where
   evaluate_product _ _ = undefined
 
