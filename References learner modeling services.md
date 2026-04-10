@@ -1,71 +1,35 @@
-# References: Learner Modeling Services
-
-* **Ai et al., 2019:** Fangzhe Ai, Yishuai Chen, Yuchun Guo, Yongxiang Zhao, Zhenzhu Wang, Guowei Fu, and Guangyan Wang. Concept-aware deep knowledge tracing and exercise recommendation in an online learning system. *International Educational Data Mining Society*, 2019.
-
-* **Akhuseyinoglu et al., 2022:** Kamil Akhuseyinoglu, Aleksandra Klasnja Milicevic, and Peter Brusilovsky. Who are my peers? learner-controlled social comparison in a programming course. In *ECTEL*, pages 1–15. Springer, 2022.
-
-* **Arroyo et al., 2014:** Ivon Arroyo, Beverly Park Woolf, Winslow Burelson, Kasia Muldner, Dovan Rai, and Minghui Tai. A multimedia adaptive tutoring system for mathematics that addresses cognition, metacognition and affect. *International Journal of Artificial Intelligence in Education*, 24(4):387–426, 2014.
-
-* **Attali & Burstein, 2006:** Yigal Attali and Jill Burstein. Automated essay scoring with e-rater® v. 2. *The Journal of Technology, Learning and Assessment*, 4(3), 2006.
-
-* **Ben David et al., 2016:** Yossi Ben David, Avi Segal, and Ya'akov Gal. Sequencing educational content in classrooms using Bayesian knowledge tracing. In *Proceedings of the sixth international conference on Learning Analytics & Knowledge*, pages 354–363, 2016.
-
-* **Berens et al., 2019:** Johannes Berens, Kerstin Schneider, Simon Gortz, Simon Oster, and Julian Burghoff. Early detection of students at risk–predicting student dropouts using administrative student data from German universities and machine learning methods. *Journal of Educational Data Mining*, 11(3):1–41, 2019.
-
-* **Bernius et al., 2022:** Jan Philip Bernius, Stephan Krusche, and Bernd Bruegge. Machine learning based feedback on textual student answers in large courses. *Computers and Education: Artificial Intelligence*, 3:100081, 2022.
-
-* **Brusilovsky et al., 2015:** Peter Brusilovsky, Sibel Somyürek, Julio Guerra, Roya Hosseini, Vladimir Zadorozhny, and Paula J Durlach. Open social student modeling for personalized learning. *IEEE Transactions on Emerging Topics in Computing*, 4(3):450–461, 2015.
-
-* **Bull & Kay, 2007:** Susan Bull and Judy Kay. Student models that invite the learner in: The SMILI:() open learner modelling framework. *International Journal of Artificial Intelligence in Education*, 17(2):89–120, 2007.
-
-* **Chen, 2008:** Chih-Ming Chen. Intelligent web-based learning system with personalized learning path guidance. *Computers & Education*, 51(2):787–814, 2008.
-
-* **Clement et al., 2013:** Benjamin Clement, Didier Roy, Pierre-Yves Oudeyer, and Manuel Lopes. Multi-armed bandits for intelligent tutoring systems. *arXiv preprint arXiv:1310.3174*, 2013.
-
-* **Dimitrova et al., 2009:** V Dimitrova et al. Emotion sensors go to school. *Artificial Intelligence in Education: Building Learning Systems that Care: From Knowledge Representation to Affective Modelling*, page 17, 2009.
-
-* **Elbadrawy & Karypis, 2016:** Asmaa Elbadrawy and George Karypis. Domain-aware grade prediction and top-n course recommendation. In *Proceedings of the 10th ACM conference on recommender systems*, pages 183–190, 2016.
-
-* **Fleur et al., 2023:** Damien S Fleur, Max Marshall, Miguel Pieters, Natasa Brouwer, Gerrit Oomens, Angelos Konstantinidis, Koos Winnips, Sylvia Moes, Wouter van den Bos, Bert Bredeweg, et al. iGuideME: supporting self-regulated learning and academic achievement with personalized peer-comparison feedback in higher education. *Journal of Learning Analytics*, 10(2):100–114, 2023.
-
-* **Heffernan & Heffernan, 2014:** Neil T Heffernan and Cristina Lindquist Heffernan. The ASSISTments ecosystem: Building a platform that brings scientists and teachers together for minimally invasive research on human learning and teaching. *International Journal of Artificial Intelligence in Education*, 24(4):470–497, 2014.
-
-* **Hooshyar et al., 2023:** Danial Hooshyar, Nour El Mawas, Marcelo Milrad, and Yeongwook Yang. Modeling learners to early predict their performance in educational computer games. *IEEE Access*, 11:20399–20417, 2023.
-
-* **Huang et al., 2007:** Mu-Jung Huang, Hwa-Shan Huang, and Mu-Yen Chen. Constructing a personalized e-learning system based on genetic algorithm and case-based reasoning approach. *Expert Systems with Applications*, 33(3):551–564, 2007.
-
-* **Jagan et al., 2016:** A Jagan, V Nagarajan, and K Sathiyamurthy. Latent Dirichlet allocation based behavior identification system for personalized e-content generation. *Journal of Computational and Theoretical Nanoscience*, 13(11):8200–8211, 2016.
-
-* **Jimenez Martinez et al., 2024:** Azucena L Jimenez Martinez, Kanika Sood, and Rakeshkumar Mahto. Early detection of at-risk students using machine learning. In *World Congress in Computer Science, Computer Engineering & Applied Computing*, pages 396–406. Springer, 2024.
-
-* **Klinkenberg et al., 2011:** Sharon Klinkenberg, Marthe Straatemeier, and Han LJ van der Maas. Computer adaptive practice of maths ability using a new item response model for on the fly ability and difficulty estimation. *Computers & Education*, 57(2):1813–1824, 2011.
-
-* **Kloft et al., 2014:** Marius Kloft, Felix Stiehler, Zhilin Zheng, and Niels Pinkwart. Predicting MOOC dropout over weeks using machine learning methods. In *Proceedings of the EMNLP 2014 workshop on analysis of large scale social interaction in MOOCs*, pages 60–65, 2014.
-
-* **Koedinger, 2006:** Kenneth Koedinger. Cognitive tutors: Technology bringing learning science to the classroom. 2006.
-
-* **Kotsiantis et al., 2004:** Sotiris Kotsiantis, Christos Pierrakeas, and Panagiotis Pintelas. Predicting students' performance in distance learning using machine learning techniques. *Applied Artificial Intelligence*, 18(5):411–426, 2004.
-
-* **Minn, 2022:** Sein Minn. AI-assisted knowledge assessment techniques for adaptive learning environments. *Computers and Education: Artificial Intelligence*, 3:100050, 2022.
-
-* **Mitrovic, 2003:** Antonija Mitrovic. An intelligent SQL tutor on the web. *International Journal of Artificial Intelligence in Education*, 13(2-4):173–197, 2003.
-
-* **Mitrovic & Ohlsson, 2016:** Antonija Mitrovic and Stellan Ohlsson. Implementing CBM: SQL-Tutor after fifteen years. *International Journal of Artificial Intelligence in Education*, 26(1):150–159, 2016.
-
-* **Ohlsson, 2016:** Stellan Ohlsson. Constraint-based modeling: from cognitive theory to computer tutoring–and back again. *International Journal of Artificial Intelligence in Education*, 26(1):457–473, 2016.
-
-* **Pardos & Heffernan, 2010:** Zachary A Pardos and Neil T Heffernan. Modeling individualization in a Bayesian networks implementation of knowledge tracing. In *International conference on user modeling, adaptation, and personalization*, pages 255–266. Springer, 2010.
-
-* **Park, 2015:** Yeonjeong Park. Development of the learning analytics dashboard to support students' learning performance. 2015.
-
-* **Somyürek et al., 2020:** Sibel Somyürek, Peter Brusilovsky, and Julio Guerra. Supporting knowledge monitoring ability: open learner modeling vs. open social learner modeling. *Research and Practice in Technology Enhanced Learning*, 15(1):17, 2020.
-
-* **Straatemeier et al., 2014:** Marthe Straatemeier et al. Math Garden: A new educational and scientific instrument. *Universiteit van Amsterdam [Host]*, 2014.
-
-* **Thai-Nghe et al., 2010:** Nguyen Thai-Nghe, Lucas Drumond, Artus Krohn-Grimberghe, and Lars Schmidt-Thieme. Recommender system for predicting student performance. *Procedia Computer Science*, 1(2):2811–2819, 2010.
-
-* **Wu et al., 2020:** Zhengyang Wu, Ming Li, Yong Tang, and Qingyu Liang. Exercise recommendation based on knowledge concept prediction. *Knowledge-Based Systems*, 210:106481, 2020.
-
-* **Xing & Du, 2019:** Wanli Xing and Dongping Du. Dropout prediction in MOOCs: Using deep learning for personalized intervention. *Journal of Educational Computing Research*, 57(3):547–570, 2019.
-
-* **Zhou et al., 2018:** Yuwen Zhou, Changqin Huang, Qintai Hu, Jia Zhu, and Yong Tang. Personalized learning full-path recommendation model based on LSTM neural networks. *Information Sciences*, 444:135–152, 2018.
+*References: Learner Modeling Services*
+Ai, F., Chen, Y., Guo, Y., Zhao, Y., Wang, Z., Fu, G., & Wang, G. (2019). Concept-aware deep knowledge tracing and exercise recommendation in an online learning system. International Educational Data Mining Society.
+Akhuseyinoglu, K., Klasnja Milicevic, A., & Brusilovsky, P. (2022). Who are my peers? Learner-controlled social comparison in a programming course. In Proceedings of the European Conference on Technology Enhanced Learning (ECTEL) (pp. 1–15). Springer.
+Arroyo, I., Woolf, B. P., Burelson, W., Muldner, K., Rai, D., & Tai, M. (2014). A multimedia adaptive tutoring system for mathematics that addresses cognition, metacognition and affect. International Journal of Artificial Intelligence in Education, 24(4), 387–426. https://doi.org/10.1007/s40593-014-0023-y
+Ben David, Y., Segal, A., & Gal, Y. (2016). Sequencing educational content in classrooms using Bayesian knowledge tracing. In Proceedings of the 6th International Conference on Learning Analytics & Knowledge (pp. 354–363). ACM.
+Berens, J., Schneider, K., Gortz, S., Oster, S., & Burghoff, J. (2019). Early detection of students at risk — predicting student dropouts using administrative student data from German universities and machine learning methods. Journal of Educational Data Mining, 11(3), 1–41.
+Brusilovsky, P., Somyürek, S., Guerra, J., Hosseini, R., Zadorozhny, V., & Durlach, P. J. (2015). Open social student modeling for personalized learning. IEEE Transactions on Emerging Topics in Computing, 4(3), 450–461. https://doi.org/10.1109/TETC.2015.2501243
+Bull, S., & Kay, J. (2007). Student models that invite the learner in: The SMILI:() open learner modelling framework. International Journal of Artificial Intelligence in Education, 17(2), 89–120.
+Chen, C.-M. (2008). Intelligent web-based learning system with personalized learning path guidance. Computers & Education, 51(2), 787–814. https://doi.org/10.1016/j.compedu.2007.08.004
+Clement, B., Roy, D., Oudeyer, P.-Y., & Lopes, M. (2013). Multi-armed bandits for intelligent tutoring systems. arXiv preprint arXiv:1310.3174. https://arxiv.org/abs/1310.3174
+Dimitrova, V., et al. (2009). Emotion sensors go to school. In Artificial Intelligence in Education: Building Learning Systems that Care: From Knowledge Representation to Affective Modelling (p. 17). IOS Press.
+Elbadrawy, A., & Karypis, G. (2016). Domain-aware grade prediction and top-n course recommendation. In Proceedings of the 10th ACM Conference on Recommender Systems (pp. 183–190). ACM. https://doi.org/10.1145/2959100.2959195
+Fleur, D. S., Marshall, M., Pieters, M., Brouwer, N., Oomens, G., Konstantinidis, A., Winnips, K., Moes, S., van den Bos, W., Bredeweg, B., et al. (2023). iGuideME: Supporting self-regulated learning and academic achievement with personalized peer-comparison feedback in higher education. Journal of Learning Analytics, 10(2), 100–114. https://doi.org/10.18608/jla.2023.7577
+Hooshyar, D., El Mawas, N., Milrad, M., & Yang, Y. (2023). Modeling learners to early predict their performance in educational computer games. IEEE Access, 11, 20399–20417. https://doi.org/10.1109/ACCESS.2023.3249285
+Huang, M.-J., Huang, H.-S., & Chen, M.-Y. (2007). Constructing a personalized e-learning system based on genetic algorithm and case-based reasoning approach. Expert Systems with Applications, 33(3), 551–564. https://doi.org/10.1016/j.eswa.2006.05.019
+Jagan, A., Nagarajan, V., & Sathiyamurthy, K. (2016). Latent Dirichlet allocation based behavior identification system for personalized e-content generation. Journal of Computational and Theoretical Nanoscience, 13(11), 8200–8211.
+Jimenez Martinez, A. L., Sood, K., & Mahto, R. (2024). Early detection of at-risk students using machine learning. In World Congress in Computer Science, Computer Engineering & Applied Computing (pp. 396–406). Springer.
+Klinkenberg, S., Straatemeier, M., & van der Maas, H. L. J. (2011). Computer adaptive practice of maths ability using a new item response model for on the fly ability and difficulty estimation. Computers & Education, 57(2), 1813–1824. https://doi.org/10.1016/j.compedu.2011.02.003
+Kloft, M., Stiehler, F., Zheng, Z., & Pinkwart, N. (2014). Predicting MOOC dropout over weeks using machine learning methods. In Proceedings of the EMNLP 2014 Workshop on Analysis of Large Scale Social Interaction in MOOCs (pp. 60–65). ACL.
+Koedinger, K., & Corbett, A. (2006). Cognitive tutors: Technology bringing learning science to the classroom. In The Cambridge Handbook of the Learning Sciences (pp. 61–77). Cambridge University Press.
+Kotsiantis, S., Pierrakeas, C., & Pintelas, P. (2004). Predicting students' performance in distance learning using machine learning techniques. Applied Artificial Intelligence, 18(5), 411–426. https://doi.org/10.1080/08839510490442058
+Maniktala, M., Chi, M., & Barnes, T. (2022). Enhancing a student productivity model for adaptive problem-solving assistance. User Modeling and User-Adapted Interaction, 32(4), 655–709. https://doi.org/10.1007/s11257-022-09338-7
+Minn, S. (2022). AI-assisted knowledge assessment techniques for adaptive learning environments. Computers and Education: Artificial Intelligence, 3, 100050. https://doi.org/10.1016/j.caeai.2022.100050
+Mitrovic, A. (2003). An intelligent SQL tutor on the web. International Journal of Artificial Intelligence in Education, 13(2–4), 173–197.
+Ohlsson, S. (2016). Constraint-based modeling: From cognitive theory to computer tutoring — and back again. International Journal of Artificial Intelligence in Education, 26(1), 457–473. https://doi.org/10.1007/s40593-015-0075-5
+Pardos, Z. A., & Heffernan, N. T. (2010). Modeling individualization in a Bayesian networks implementation of knowledge tracing. In Proceedings of the 18th International Conference on User Modeling, Adaptation, and Personalization (UMAP) (pp. 255–266). Springer.
+Park, Y. (2015). Development of the learning analytics dashboard to support students' learning performance. Journal of Universal Computer Science, 21(1), 110–133.
+Sao Pedro, M. A., Baker, R. S. J. d., & Gobert, J. D. (2013). Incorporating scaffolding and tutor context into Bayesian Knowledge Tracing to predict inquiry skill acquisition. In Proceedings of the 6th International Conference on Educational Data Mining (EDM 2013) (pp. 185–188). IEDMS. https://learninganalytics.upenn.edu/ryanbaker/SaoPedroetalEDM2013_Final.pdf
+Somyürek, S., Brusilovsky, P., & Guerra, J. (2020). Supporting knowledge monitoring ability: Open learner modeling vs. open social learner modeling. Research and Practice in Technology Enhanced Learning, 15(1), 17. https://doi.org/10.1186/s41039-020-00136-6
+Straatemeier, M., et al. (2014). Math Garden: A new educational and scientific instrument. Universiteit van Amsterdam [Host].
+Thai-Nghe, N., Drumond, L., Krohn-Grimberghe, A., & Schmidt-Thieme, L. (2010). Recommender system for predicting student performance. Procedia Computer Science, 1(2), 2811–2819. https://doi.org/10.1016/j.procs.2010.08.006
+Wambsganss, T., Kueng, T., Soellner, M., & Leimeister, J. M. (2021). ArgueTutor: An adaptive dialog-based learning system for argumentation skills. In Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems (CHI '21), Article 523 (12 pages). ACM. https://doi.org/10.1145/3411764.3445781
+Wu, Z., Li, M., Tang, Y., & Liang, Q. (2020). Exercise recommendation based on knowledge concept prediction. Knowledge-Based Systems, 210, 106481. https://doi.org/10.1016/j.knosys.2020.106481
+Xing, W., & Du, D. (2019). Dropout prediction in MOOCs: Using deep learning for personalized intervention. Journal of Educational Computing Research, 57(3), 547–570. https://doi.org/10.1177/0735633118757015
+Zhou, Y., Huang, C., Hu, Q., Zhu, J., & Tang, Y. (2018). Personalized learning full-path recommendation model based on LSTM neural networks. Information Sciences, 444, 135–152. https://doi.org/10.1016/j.ins.2018.02.053
