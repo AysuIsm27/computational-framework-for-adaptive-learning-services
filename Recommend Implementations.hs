@@ -8,10 +8,9 @@ import Data.Ord  (comparing, Down(..))
 -- | -----------------------------------------------------------------------
 -- | Recommend Implementations
 -- | -----------------------------------------------------------------------
--- | All four papers below implement the same two typeclasses:
--- |   Candidates i m c  — determine eligible items for a learner
--- |   Best       i m c  — rank them from most to least suitable
--- | Combined here because they share the same generic interface.
+-- | All three papers below implement the Candidates typeclass to determine
+-- | eligible items for a learner, and provide a standalone rank function
+-- | to order them from most to least suitable.
 -- | -----------------------------------------------------------------------
 
 
@@ -59,101 +58,32 @@ allItems  =  undefined
 
 -- Candidates: all items the learner has not yet attempted.
 instance Candidates IRTLearner IRTModel Item where
-  candidates learner model =
+  candidates learner _ =
     let attempted = map fst (responseHistory learner)
     in  allItems \\ attempted
 
--- Best: orders candidates by smallest gap between item difficulty and
+-- Rank: orders candidates by smallest gap between item difficulty and
 -- the learner's estimated ability.
-instance Best IRTLearner IRTModel Item where
-  best learner model cs =
-    let theta = estimateAbility learner
-    in  sortBy (comparing (\c -> abs (itemDifficulty model c - theta))) cs
+rank_irt :: IRTLearner -> IRTModel -> [Item] -> [Item]
+rank_irt learner model cs =
+  let theta = estimateAbility learner
+  in  sortBy (comparing (\c -> abs (itemDifficulty model c - theta))) cs
 
-service_irt  :: IRTLearner -> IRTModel -> [Item]
-service_irt  =  recommend
-
-
--- | =======================================================================
--- | 2. Nguyen et al. -- Collaborative Filtering (CF)
--- | =======================================================================
--- | Nguyen, V. A., Nguyen, H. H., Nguyen, D. L., & Le, M. D. (2021).
--- | A course recommendation model for students based on learning outcome.
--- | Education and Information Technologies, 26(5), 5389-5415.
--- | DOI: https://doi.org/10.1007/s10639-021-10524-0
--- | Recommends courses ranked by predicted rating, derived from k nearest
--- | peer learners. The learner may choose which course to enrol in.
-
-data CollaborativeModel = CollaborativeModel { ratingMatrix :: [[Double]]
-                                             , similarities :: [[Double]]
-                                             } deriving (Show)
-
-data Course = Course { courseId   :: String
-                     , courseName :: String
-                     , courseArea :: String
-                     } deriving (Show, Eq)
-
-data CFLearner = CFLearner { cfLearnerId      :: Int
-                           , completedCourses :: [(Course, Double)]
-                           } deriving (Show, Eq)
-
-ratingVector               :: CollaborativeModel -> CFLearner -> [Double]
-ratingVector model learner  =
-  case drop (cfLearnerId learner) (ratingMatrix model) of
-    (row:_) -> row
-    []      -> []
-
-cosineSimilarity        :: [Double] -> [Double] -> Double
-cosineSimilarity xs ys  =
-  let dot   = sum (zipWith (*) xs ys)
-      normX = sqrt (sum (map (^2) xs))
-      normY = sqrt (sum (map (^2) ys))
-  in  if normX == 0 || normY == 0 then 0.0 else dot / (normX * normY)
-
-nearestNeighbours                     :: CollaborativeModel -> CFLearner -> [CFLearner] -> [CFLearner]
-nearestNeighbours model target peers  =
-  let targetVec = ratingVector model target
-      scored    = map (\p -> (p, cosineSimilarity targetVec (ratingVector model p))) peers
-      sorted    = sortBy (comparing (Down . snd)) scored
-  in  map fst (take k sorted)
-  where k = 5
-
-predictRating                    :: [CFLearner] -> Course -> Double
-predictRating neighbours course  =
-  let ratings = [ r | n <- neighbours
-                    , (c, r) <- completedCourses n
-                    , c == course ]
-  in  if null ratings then 0.0 else sum ratings / fromIntegral (length ratings)
-
-allCourses    :: [Course];    allCourses    = undefined
-allCFLearners :: [CFLearner]; allCFLearners = undefined
-
--- Candidates: all courses the learner has not yet completed.
-instance Candidates CFLearner CollaborativeModel Course where
-  candidates learner model =
-    let taken = map fst (completedCourses learner)
-    in  allCourses \\ taken
-
--- Best: orders candidates by predicted rating from nearest peers.
-instance Best CFLearner CollaborativeModel Course where
-  best learner model cs =
-    let peers      = allCFLearners \\ [learner]
-        neighbours = nearestNeighbours model learner peers
-    in  sortBy (comparing (Down . predictRating neighbours)) cs
-
-service_cf  :: CFLearner -> CollaborativeModel -> [Course]
-service_cf  =  recommend
+service_irt :: IRTLearner -> IRTModel -> [Item]
+service_irt learner model =
+  let cs = candidates learner model
+  in  rank_irt learner model cs
 
 
 -- | =======================================================================
--- | 3. Jagan et al. -- Latent Dirichlet Allocation (LDA)
+-- | 2. Jagan et al. -- Latent Dirichlet Allocation (LDA)
 -- | =======================================================================
 -- | Jagan, A., Nagarajan, V., & Sathiyamurthy, K. (2017).
 -- | Latent Dirichlet allocation based behavior identification system
 -- | for personalized E-content generation.
+-- | DOI: 10.1166/jctn.2016.5956
 -- | Recommends resources ranked by topic similarity to the learner's
 -- | inferred behavioural topic mixture. The learner may choose which to access.
-     DOI: 10.1166/jctn.2016.5956
 
 data LDAModel = LDAModel { topicDistributions :: [[Double]]
                          , numTopics          :: Int
@@ -165,8 +95,8 @@ data InteractionLog = InteractionLog { logStudentId  :: Int
                                      , actionType    :: String
                                      } deriving (Show, Eq)
 
-data LDALearner = LDALearner { ldaLearnerId        :: Int
-                             , interactionHistory  :: [InteractionLog]
+data LDALearner = LDALearner { ldaLearnerId       :: Int
+                             , interactionHistory :: [InteractionLog]
                              } deriving (Show, Eq)
 
 data Resource = Resource { resId        :: String
@@ -187,22 +117,24 @@ allResources  =  undefined
 
 -- Candidates: all resources the learner has not yet accessed.
 instance Candidates LDALearner LDAModel Resource where
-  candidates learner model =
+  candidates learner _ =
     let accessed = map logResourceId (interactionHistory learner)
     in  filter (\r -> resId r `notElem` accessed) allResources
 
--- Best: orders candidates by topic similarity to the learner's topic mixture.
-instance Best LDALearner LDAModel Resource where
-  best learner model cs =
-    let topicMix = inferTopicMixture model learner
-    in  sortBy (comparing (Down . topicSimilarity topicMix . resTopicDist)) cs
+-- Rank: orders candidates by topic similarity to the learner's topic mixture.
+rank_lda :: LDALearner -> LDAModel -> [Resource] -> [Resource]
+rank_lda learner model cs =
+  let topicMix = inferTopicMixture model learner
+  in  sortBy (comparing (Down . topicSimilarity topicMix . resTopicDist)) cs
 
-service_lda  :: LDALearner -> LDAModel -> [Resource]
-service_lda  =  recommend
+service_lda :: LDALearner -> LDAModel -> [Resource]
+service_lda learner model =
+  let cs = candidates learner model
+  in  rank_lda learner model cs
 
 
 -- | =======================================================================
--- | 4. Rodriguez-Martinez et al. -- Formative Assessment
+-- | 3. Rodriguez-Martinez et al. -- Formative Assessment
 -- | =======================================================================
 -- | Rodriguez-Martinez, J. A., Gonzalez-Calero, J. A., del Olmo-Munoz, J.,
 -- | Arnau, D., & Tirado-Olivares, S. (2023).
@@ -253,12 +185,14 @@ instance Candidates FormativeLearner FormativeModel FractionTask where
     let attempted = map resultTaskId (taskHistory learner)
     in  filter (\t -> taskId t `notElem` attempted) (taskBank model)
 
--- Best: prioritises tasks targeting the learner's weakest skill, then
+-- Rank: prioritises tasks targeting the learner's weakest skill, then
 -- orders by increasing difficulty within that skill.
-instance Best FormativeLearner FormativeModel FractionTask where
-  best learner model cs =
-    sortBy (\a b -> compare (skillMastery model learner (taskSkill a), taskDifficulty a)
-                            (skillMastery model learner (taskSkill b), taskDifficulty b)) cs
+rank_formative :: FormativeLearner -> FormativeModel -> [FractionTask] -> [FractionTask]
+rank_formative learner model cs =
+  sortBy (\a b -> compare (skillMastery model learner (taskSkill a), taskDifficulty a)
+                          (skillMastery model learner (taskSkill b), taskDifficulty b)) cs
 
-service_formative  :: FormativeLearner -> FormativeModel -> [FractionTask]
-service_formative  =  recommend
+service_formative :: FormativeLearner -> FormativeModel -> [FractionTask]
+service_formative learner model =
+  let cs = candidates learner model
+  in  rank_formative learner model cs
