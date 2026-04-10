@@ -1,6 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, AllowAmbiguousTypes #-}
 module Recommend where
-
 import Data.List ((\\))
 
 -- | -----------------------------------------------------------------------
@@ -12,7 +11,8 @@ import Data.List ((\\))
 -- | follow the recommendation or not.
 -- |
 -- | Because recommendation requires two distinct steps (finding candidates,
--- | then ranking them), we use two type classes to form a pipeline.
+-- | then ranking them), we use a type class for candidates and a standalone
+-- | rank function per implementation.
 -- | -----------------------------------------------------------------------
 
 -- This is a generalized approach to modeling services using type classes.
@@ -33,26 +33,18 @@ class Model m l where
 class Candidates i c where
   candidates  ::  i -> [c]
 
--- | Best is a type class for selecting the best object from a set of candidates.
--- | Note: The 'i' (input) is included here so that 'best' has access
--- | to the original context (e.g., the specific Student).
-class Best i m c where
-  best  ::  i -> m -> [c] -> c
+-- | The generic 'recommend' function. It selects candidates and delegates
+-- | ranking to a caller-supplied rank function.
+recommend :: Candidates i c => (i -> [c] -> [c]) -> i -> [c]
+recommend rank input = rank input (candidates input)
 
--- | The generic 'recommend' function. It combines candidate selection
--- | and the best object selection into a single pipeline.
--- | Model m l is added to ensure that a properly structured model is present.
-recommend              ::  (Model m l, Candidates i c, Best i m c) => i -> m -> c
-recommend input model  =   best input model (candidates input)
-
--- | Convenience: return only the top-k recommendations from a ranked list.
-recommendTopK              ::  (Model m l, Candidates i c, Best i m c) => Int -> i -> m -> [c]
-recommendTopK k input model =  take k (candidates input)
+-- | Convenience: return only the top-n recommendations from a ranked list.
+recommendTopN :: Candidates i c => Int -> (i -> [c] -> [c]) -> i -> [c]
+recommendTopN n rank input = take n (recommend rank input)
 
 -- | ---------------------------
 -- | General Types
 -- | ---------------------------
-
 type Identifier  =  String
 
 -- | A grade can be thought of as a predicted probability of success (0.0 to 1.0).
@@ -66,7 +58,6 @@ data Program     =  Program { courses :: [Course] } deriving (Show)
 -- | ---------------------------
 -- | Shared Candidate Logic
 -- | ---------------------------
-
 instance Candidates (Student, Program) Course where
   -- Input: a tuple of a student and a program.
   -- Output: a list of courses from the program the student has not yet taken.
