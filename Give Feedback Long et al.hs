@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
-module GiveFeedbackLongAleven where
+module AssistFeedbackLongAleven where
 
-import GiveFeedback
+import AssistFeedback
 
 -- | =======================================================================
 -- | Long & Aleven -- Enhancing learning outcomes through self-regulated
@@ -212,7 +212,7 @@ instance EvaluateProduct StudentProduct LearnerModel OLMFeedback where
   evaluate_product _ _ = undefined
 
 service_olm_feedback :: StudentProduct -> LearnerModel -> OLMFeedback
-service_olm_feedback = give_feedback
+service_olm_feedback = assist_feedback
 
 -- ---------------------------------------------------------------------------
 -- Example data
