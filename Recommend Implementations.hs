@@ -8,9 +8,9 @@ import Data.Ord  (comparing, Down(..))
 -- | -----------------------------------------------------------------------
 -- | Recommend Implementations
 -- | -----------------------------------------------------------------------
--- | All three papers below implement the Candidates typeclass to determine
--- | eligible items for a learner, and provide a standalone rank function
--- | to order them from most to least suitable.
+-- | All three papers below implement the Candidates and Model typeclasses,
+-- | allowing the framework to verify their components at compile time via
+-- | the generic 'recommend' function.
 -- | -----------------------------------------------------------------------
 
 
@@ -56,6 +56,11 @@ itemDifficulty model item  =
 allItems  :: [Item]
 allItems  =  undefined
 
+-- Model: An IRT model is updated by an item response history item.
+instance Model IRTModel (Item, Bool) where
+  init    =  IRTModel [] []
+  update  =  undefined
+
 -- Candidates: all items the learner has not yet attempted.
 instance Candidates IRTLearner IRTModel Item where
   candidates learner _ =
@@ -69,10 +74,9 @@ rank_irt learner model cs =
   let theta = estimateAbility learner
   in  sortBy (comparing (\c -> abs (itemDifficulty model c - theta))) cs
 
+-- The Service: Leverages 'recommend' to force compile-time verification.
 service_irt :: IRTLearner -> IRTModel -> [Item]
-service_irt learner model =
-  let cs = candidates learner model
-  in  rank_irt learner model cs
+service_irt learner model = recommend rank_irt learner model
 
 
 -- | =======================================================================
@@ -115,6 +119,11 @@ topicSimilarity xs ys  =  sum (zipWith (*) xs ys)
 allResources  :: [Resource]
 allResources  =  undefined
 
+-- Model: An LDA model is updated by an interaction log behavior entry.
+instance Model LDAModel InteractionLog where
+  init    =  LDAModel [] 0
+  update  =  undefined
+
 -- Candidates: all resources the learner has not yet accessed.
 instance Candidates LDALearner LDAModel Resource where
   candidates learner _ =
@@ -127,10 +136,9 @@ rank_lda learner model cs =
   let topicMix = inferTopicMixture model learner
   in  sortBy (comparing (Down . topicSimilarity topicMix . resTopicDist)) cs
 
+-- The Service: Leverages 'recommend' to force compile-time verification.
 service_lda :: LDALearner -> LDAModel -> [Resource]
-service_lda learner model =
-  let cs = candidates learner model
-  in  rank_lda learner model cs
+service_lda learner model = recommend rank_lda learner model
 
 
 -- | =======================================================================
@@ -179,6 +187,11 @@ skillMastery model learner skill  =
       correctCount = length (filter correct results)
   in  if null results then 0.0 else fromIntegral correctCount / fromIntegral (length results)
 
+-- Model: A formative model is updated by task performance results.
+instance Model FormativeModel TaskResult where
+  init    =  FormativeModel [] []
+  update  =  undefined
+
 -- Candidates: all tasks the learner has not yet attempted.
 instance Candidates FormativeLearner FormativeModel FractionTask where
   candidates learner model =
@@ -192,7 +205,6 @@ rank_formative learner model cs =
   sortBy (\a b -> compare (skillMastery model learner (taskSkill a), taskDifficulty a)
                           (skillMastery model learner (taskSkill b), taskDifficulty b)) cs
 
+-- The Service: Leverages 'recommend' to force compile-time verification.
 service_formative :: FormativeLearner -> FormativeModel -> [FractionTask]
-service_formative learner model =
-  let cs = candidates learner model
-  in  rank_formative learner model cs
+service_formative learner model = recommend rank_formative learner model
