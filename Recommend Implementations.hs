@@ -5,14 +5,6 @@ import Recommend
 import Data.List (sortBy, (\\))
 import Data.Ord  (comparing, Down(..))
 
--- | -----------------------------------------------------------------------
--- | Recommend Implementations
--- | -----------------------------------------------------------------------
--- | All three papers below implement the Candidates and Model typeclasses,
--- | allowing the framework to verify their components at compile time via
--- | the generic 'recommend' function.
--- | -----------------------------------------------------------------------
-
 
 -- | =======================================================================
 -- | 1. Chen et al. — Item Response Theory (IRT)
