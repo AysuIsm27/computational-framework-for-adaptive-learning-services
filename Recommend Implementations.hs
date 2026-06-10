@@ -66,7 +66,7 @@ rank_irt learner model cs =
   let theta = estimateAbility learner
   in  sortBy (comparing (\c -> abs (itemDifficulty model c - theta))) cs
 
--- The Service: Leverages 'recommend' to force compile-time verification.
+
 service_irt :: IRTLearner -> IRTModel -> [Item]
 service_irt learner model = recommend rank_irt learner model
 
@@ -128,7 +128,7 @@ rank_lda learner model cs =
   let topicMix = inferTopicMixture model learner
   in  sortBy (comparing (Down . topicSimilarity topicMix . resTopicDist)) cs
 
--- The Service: Leverages 'recommend' to force compile-time verification.
+
 service_lda :: LDALearner -> LDAModel -> [Resource]
 service_lda learner model = recommend rank_lda learner model
 
@@ -197,6 +197,6 @@ rank_formative learner model cs =
   sortBy (\a b -> compare (skillMastery model learner (taskSkill a), taskDifficulty a)
                           (skillMastery model learner (taskSkill b), taskDifficulty b)) cs
 
--- The Service: Leverages 'recommend' to force compile-time verification.
+
 service_formative :: FormativeLearner -> FormativeModel -> [FractionTask]
 service_formative learner model = recommend rank_formative learner model
