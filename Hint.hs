@@ -18,8 +18,8 @@ module Hint where
 -- | and 'h' is the resulting hint.
 -- | -----------------------------------------------------------------------
 
--- | Generates a forward-looking hint for the learner's current task state.
---
+
+
 -- The functional dependency states that the combination of task-state type
 -- and model type determines the resulting hint type.
 class GenerateHint t m h | t m -> h where
@@ -63,13 +63,14 @@ hint_when needs_hint task model
 --
 -- No hint is generated when the initial task state already satisfies the
 -- progress condition or when the cycle limit is zero.
+
 hint_until_progress
   :: GenerateHint t m h
-  => (t -> Bool)        -- ^ Whether sufficient progress has been made
-  -> (t -> h -> t)      -- ^ Apply a hint to produce a new task state
-  -> Int                -- ^ Maximum number of hint cycles
-  -> t                  -- ^ Initial task state
-  -> m                  -- ^ Learner model
+  => (t -> Bool)        -- Whether sufficient progress has been made
+  -> (t -> h -> t)      -- Apply a hint to produce a new task state
+  -> Int                -- Maximum number of hint cycles
+  -> t                  -- Initial task state
+  -> m                  -- Learner model
   -> (t, Maybe h, Int)
 hint_until_progress progressed advance max_rounds task model =
   go task Nothing 0
@@ -89,30 +90,4 @@ hint_until_progress progressed advance max_rounds task model =
           in go
                next_task
                (Just generated_hint)
-               (completed_rounds + 1)          => (t -> m -> Bool) -- ^ Whether a hint is currently needed
-          -> t
-          -> m
-          -> Maybe h
-hint_when needs_hint task model
-  | needs_hint task model = Just (generate_hint task model)
-  | otherwise             = Nothing
-
--- | Iteratively generates and applies hints until sufficient progress is made,
---   or a maximum number of hint cycles is exhausted.
---   Returns the final task state, the last hint, and the number of cycles.
-hint_until_progress :: GenerateHint t m h
-                    => (t -> Bool)   -- ^ Whether sufficient progress was made
-                    -> (t -> h -> t) -- ^ Update the task state after a hint
-                    -> Int           -- ^ Maximum number of hint cycles
-                    -> t
-                    -> m
-                    -> (t, h, Int)
-hint_until_progress progressed advance max_rounds task model =
-  go task 0
-  where
-    go t n =
-      let h  = generate_hint t model
-          t' = advance t h
-      in if progressed t' || n + 1 >= max_rounds
-           then (t', h, n + 1)
-           else go t' (n + 1)
+               (completed_rounds + 1)
