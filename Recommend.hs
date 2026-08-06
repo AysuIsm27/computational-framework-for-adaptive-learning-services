@@ -1,39 +1,55 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies #-}
-module Recommend where
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
-import Data.List ((\\))
+module Recommend
+  ( Model (..)
+  , Candidates (..)
+  , Ranking (..)
+  , recommend
+  , recommendTopN
+  ) where
 
--- | Model is a type class for representing learner and peer-learning models.
--- | The '| m -> l' ensures the compiler knows exactly which activity updates the model.
+-- | Represents a learner model or peer-learner model.
+-- |
+-- | The functional dependency states that the model type determines
+-- | the type of evidence used to update it.
 class Model m l | m -> l where
-  init    ::  m
-  update  ::  l -> m -> m
+  initModel :: m
+  update    :: l -> m -> m
 
--- | Candidates is a type class for determining a set of candidate objects.
--- | We pass 'm' (the model) so candidate selection knows the model's context.
+-- | Determines the candidate objects available for recommendation.
+-- |
+-- | Candidate generation may depend on both the service input and
+-- | the learner or peer-learner model.
 class Candidates i m c where
-  candidates  ::  i -> m -> [c]
+  candidates :: i -> m -> [c]
 
--- | The generic 'recommend' function. 
--- | It forces the compiler to verify BOTH the Candidates and Model instances exist.
-recommend :: (Candidates i m c, Model m l) => (i -> m -> [c] -> [c]) -> i -> m -> [c]
-recommend rank input model = rank input model (candidates input model)
+-- | Orders recommendation candidates from most to least suitable.
+class Ranking i m c where
+  rank :: i -> m -> [c] -> [c]
 
--- | Convenience: return only the top-n recommendations from a ranked list.
-recommendTopN :: (Candidates i m c, Model m l) => Int -> (i -> m -> [c] -> [c]) -> i -> m -> [c]
-recommendTopN n rank input model = take n (recommend rank input model)
+-- | Produces a ranked list of recommendations.
+recommend
+  :: ( Model m l
+     , Candidates i m c
+     , Ranking i m c
+     )
+  => i
+  -> m
+  -> [c]
+recommend input model =
+  rank input model (candidates input model)
 
--- | ---------------------------
--- | General Types & Shared Logic
--- | ---------------------------
-type Identifier  =  String
-
-data Grade       =  Grade Double deriving (Ord, Eq, Show)
-data Course      =  Course  { cname   :: Identifier } deriving (Show, Eq, Ord)
-data Student     =  Student { sname   :: Identifier
-                            , results :: [(Course, Grade)]
-                            } deriving (Show, Eq)
-data Program     =  Program { courses :: [Course] } deriving (Show)
-
-instance Candidates Student Program Course where
-  candidates student program  =  courses program \\ map fst (results student)
+-- | Returns at most the first N recommendations.
+-- | Non-positive values of N return an empty list.
+recommendTopN
+  :: ( Model m l
+     , Candidates i m c
+     , Ranking i m c
+     )
+  => Int
+  -> i
+  -> m
+  -> [c]
+recommendTopN n input model =
+  take (max 0 n) (recommend input model)
