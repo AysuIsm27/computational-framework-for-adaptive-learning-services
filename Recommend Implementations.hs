@@ -200,3 +200,159 @@ rank_formative learner model cs =
 
 service_formative :: FormativeLearner -> FormativeModel -> [FractionTask]
 service_formative learner model = recommend rank_formative learner model
+
+
+
+
+
+-- | =======================================================================
+-- | 4. Nguyen et al. -- User-Based Collaborative Filtering
+-- | =======================================================================
+-- | Nguyen, V. A., Nguyen, H. H., Nguyen, D. L., & Le, M. D. (2021).
+-- | A course recommendation model for students based on learning outcome.
+-- |
+-- | Predicts grades for courses the learner has not completed using
+-- | user-based collaborative filtering and ranks courses by predicted grade.
+
+type StudentId = String
+type CourseId  = String
+type Grade     = Double
+type Row       = Map.Map CourseId Grade
+
+newtype Course = Course
+  { courseId :: CourseId
+  } deriving (Show, Eq)
+
+data Student = Student
+  { studentId        :: StudentId
+  , grades           :: Row
+  , completedCourses :: [CourseId]
+  } deriving (Show, Eq)
+
+data CourseGrade =
+  CourseGrade StudentId CourseId Grade
+  deriving (Show, Eq)
+
+data CFModel = CFModel
+  { program     :: [Course]
+  , gradeMatrix :: Map.Map StudentId Row
+  } deriving (Show)
+
+
+-- Model: stores the student-course grade matrix.
+instance Model CFModel CourseGrade where
+  initModel =
+    CFModel [] Map.empty
+
+  update (CourseGrade s c g) model =
+    model
+      { gradeMatrix =
+          Map.insertWith Map.union
+            s
+            (Map.singleton c g)
+            (gradeMatrix model)
+      }
+
+
+-- Candidates: courses the learner has not already completed.
+instance Candidates Student CFModel Course where
+  candidates student model =
+    filter
+      ((`notElem` completedCourses student) . courseId)
+      (program model)
+
+
+-- Rank: courses with the highest predicted grades come first.
+instance Ranking Student CFModel Course where
+  rank student model =
+    map fst
+      . sortOn (Down . snd)
+      . mapMaybe score
+    where
+      score course =
+        fmap ((,) course) (predictGrade student model course)
+
+
+-- Nguyen et al., Eq. (3): user-based CF grade prediction.
+predictGrade :: Student -> CFModel -> Course -> Maybe Grade
+predictGrade student model course = do
+  meanA <- rowMean rowA
+
+  let terms =
+        mapMaybe contribution peerRows
+
+      denominator =
+        sum (map fst terms)
+
+  if denominator == 0
+    then Nothing
+    else Just
+      (meanA
+       + sum [sim * deviation | (sim, deviation) <- terms]
+         / denominator)
+
+  where
+    rowA =
+      grades student
+
+    courseIds =
+      map courseId (program model)
+
+    peerRows =
+      Map.elems
+        (Map.delete
+          (studentId student)
+          (gradeMatrix model))
+
+    contribution rowB = do
+      gradeBC <- Map.lookup (courseId course) rowB
+      meanB   <- rowMean rowB
+      sim     <- cosine courseIds rowA rowB
+
+      if sim == 0
+        then Nothing
+        else Just (sim, gradeBC - meanB)
+
+
+-- Nguyen et al., Eq. (1): cosine similarity with row-average filling.
+cosine :: [CourseId] -> Row -> Row -> Maybe Double
+cosine courses rowA rowB = do
+  meanA <- rowMean rowA
+  meanB <- rowMean rowB
+
+  let xs =
+        [ Map.findWithDefault meanA c rowA
+        | c <- courses
+        ]
+
+      ys =
+        [ Map.findWithDefault meanB c rowB
+        | c <- courses
+        ]
+
+      denominator =
+        sqrt
+          (sum [x * x | x <- xs]
+           * sum [y * y | y <- ys])
+
+  if denominator == 0
+    then Nothing
+    else Just
+      (sum (zipWith (*) xs ys) / denominator)
+
+
+rowMean :: Row -> Maybe Grade
+rowMean row
+  | Map.null row =
+      Nothing
+
+  | otherwise =
+      Just
+        (sum (Map.elems row)
+         / fromIntegral (Map.size row))
+
+
+-- Recommend the top n courses.
+service_cf :: Int -> Student -> CFModel -> [Course]
+service_cf n student model =
+  take (max 0 n) (recommend student model)
