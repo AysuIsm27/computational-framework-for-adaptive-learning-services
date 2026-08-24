@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
-module AssistFeedbackLongAleven where
+module FeedbackLongAleven where
 
-import AssistFeedback
+import Feedback
 
 -- | =======================================================================
 -- | Long & Aleven -- Enhancing learning outcomes through self-regulated
@@ -41,7 +41,7 @@ data EquationLevel
 newtype KC = KC { kcName :: String } deriving (Show, Eq)
 
 -- | System-wide domain configuration: BKT parameters, mastery threshold,
---   and level-to-KC mapping.  
+--   and level-to-KC mapping.
 data DomainConfig = DomainConfig
   { bktParamsPerKC   :: [(KC, BKTParams)]
   , masteryThreshold :: Double               -- ^ θ: P(Lₙ) ≥ θ → mastered
@@ -212,7 +212,7 @@ instance EvaluateProduct StudentProduct LearnerModel OLMFeedback where
   evaluate_product _ _ = undefined
 
 service_olm_feedback :: StudentProduct -> LearnerModel -> OLMFeedback
-service_olm_feedback = assist_feedback
+service_olm_feedback = feedback
 
 -- ---------------------------------------------------------------------------
 -- Example data
