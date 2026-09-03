@@ -3,6 +3,8 @@
 
 module Hint where
 
+import Model (Model)
+
 -- | -----------------------------------------------------------------------
 -- | Hint Service
 -- | -----------------------------------------------------------------------
@@ -21,15 +23,19 @@ module Hint where
 -- | The combination of task-state type and model type determines
 -- | the resulting hint type.
 class GenerateHint t m h | t m -> h where
-  generate_hint :: t -> m -> h
+  generate_hint :: t -> m -> Maybe h
 
 -- | Maps a task state and learner model to a tailored hint.
-hint :: GenerateHint t m h => t -> m -> h
+hint :: (Model m l, GenerateHint t m h) => t -> m -> Maybe h
 hint = generate_hint
 
 -- | Generates hints for a batch of task states using the same learner model.
 -- | Returns each task state paired with its hint, preserving input order.
-hint_batch :: GenerateHint t m h => [t] -> m -> [(t, h)]
+hint_batch
+  :: (Model m l, GenerateHint t m h)
+  => [t]
+  -> m
+  -> [(t, Maybe h)]
 hint_batch tasks model =
   map generate tasks
   where
@@ -38,11 +44,11 @@ hint_batch tasks model =
 -- | Provides a hint only when help is requested or insufficient progress is
 -- | detected.
 hint_when
-  :: GenerateHint t m h
+  :: (Model m l, GenerateHint t m h)
   => (t -> m -> Bool) -- ^ Whether a hint is currently needed
   -> t                -- ^ Current task state
   -> m                -- ^ Learner or peer-learner model
   -> Maybe h
 hint_when needs_hint task model
-  | needs_hint task model = Just (generate_hint task model)
+  | needs_hint task model = generate_hint task model
   | otherwise             = Nothing
