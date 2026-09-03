@@ -4,9 +4,7 @@ module Scaffold where
 
 -- | Represents a learner or peer-learner model.
 -- | The model can be updated when new learning data is observed.
-class Model m l | m -> l where
-  initModel :: m
-  update    :: l -> m -> m
+import Model (Model)
 
 
 -- | Returns the scaffolds that are available for the current task
@@ -26,7 +24,7 @@ scaffold :: (Model m l, AvailableScaffolds t m s)
          => (t -> m -> [s] -> Maybe s)
          -> (s -> t -> t)
          -> t -> m -> t
-scaffold contingent apply_scaffold task model =
-  case contingent task model (available_scaffolds task model) of
+scaffold select_scaffold apply_scaffold task model =
+  case select_scaffold task model (available_scaffolds task model) of
     Nothing -> task
     Just s  -> apply_scaffold s task
