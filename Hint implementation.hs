@@ -1,91 +1,109 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-
--- Simplified example based on:
---
--- Maniktala, M., Cody, C., Isvik, A., Lytle, N., Chi, M., & Barnes, T. (2020).
--- "Extending the Hint Factory for the Assistance Dilemma:
--- A Novel, Data-driven HelpNeed Predictor for Proactive Problem-solving Help."
--- Journal of Educational Data Mining, 12(4), 24--65.
--- DOI: 10.5281/zenodo.4399683
---
--- This implementation is intentionally simplified. It uses state quality
--- and Global-Absolute progress as an example signal for deciding when a
--- proactive hint may be useful; it does not implement the complete
--- HelpNeed predictor from the paper.
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module HintFactory where
 
-import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
-import Hint (GenerateHint (..), hint, hint_batch)
+import Hint
+import Model
 
+
+-- | =======================================================================
+-- | Maniktala et al. -- Hint Factory and HelpNeed
+-- | =======================================================================
+-- | Maniktala, M., Cody, C., Isvik, A., Lytle, N., Chi, M., & Barnes, T.
+-- | (2020). Extending the Hint Factory for the Assistance Dilemma:
+-- | A Novel, Data-driven HelpNeed Predictor for Proactive Problem-solving
+-- | Help. Journal of Educational Data Mining, 12(4), 24-65.
+-- |
+-- | Historical solution paths form an interaction network. Hint Factory
+-- | identifies a productive next step for a known state. The proactive policy
+-- | separately predicts whether the learner needs help at the start of a step.
 
 type State = String
-type Step  = String
+type Step = String
+type FeatureVector = Map String Double
 
 
-data Move = Move
-  { moveFrom :: State
-  , moveStep :: Step
-  , moveTo   :: State
-  } deriving (Eq, Show)
-
-
-data Model = Model
-  { bestNext :: Map State (Step, State)
-  , quality  :: Map State Int
+data Transition = Transition
+  { transitionFrom :: State
+  , transitionStep :: Step
+  , transitionTo :: State
   } deriving (Eq, Show)
 
 
 data Advice = Advice
-  { adviceStep      :: Step
+  { adviceStep :: Step
   , adviceNextState :: State
   } deriving (Eq, Show)
 
 
--- Generate a hint for a known task state.
-instance GenerateHint State Model (Maybe Advice) where
-  generate_hint state model = do
-    (step, nextState) <- Map.lookup state (bestNext model)
-    return (Advice step nextState)
+data HelpNeedInput
+  = StateBased FeatureVector
+  | StateFree FeatureVector
+  deriving (Eq, Show)
 
 
--- A learner consists of the model and the state
--- where the learner started the problem.
-type Learner = (Model, State)
+-- | Represents the fitted state-based and state-free predictors.
+-- Their trained Random Forest trees are not specified in the paper.
+data HelpNeedPredictor = HelpNeedPredictor
+  deriving (Eq, Show)
 
 
-instance GenerateHint State Learner (Maybe Advice) where
-  generate_hint state (model, _) =
-    generate_hint state model
+data HintFactoryModel = HintFactoryModel
+  { bestNext :: Map State Advice
+  , globalQuality :: Map State Double
+  , helpNeedPredictor :: HelpNeedPredictor
+  } deriving (Eq, Show)
 
 
--- Simplified Global-Absolute efficiency.
--- True means the learner is currently in a lower-quality
--- state than at the beginning of the problem.
-needsHelp :: State -> Learner -> Maybe Bool
-needsHelp current (model, startState) = do
-  currentQuality <- Map.lookup current (quality model)
-  startQuality   <- Map.lookup startState (quality model)
-
-  return (currentQuality < startQuality)
-
-
--- Generate a proactive hint when help is needed.
-proactiveHint :: State -> Learner -> Maybe Advice
-proactiveHint state learner =
-  case needsHelp state learner of
-    Just True -> hint state learner
-    _         -> Nothing
+-- Builds or updates the historical Hint Factory interaction network and state
+-- values. This remains a research-boundary placeholder, like the fitted model
+-- operations in RecommendImplementations.
+update_hint_factory
+  :: Transition
+  -> HintFactoryModel
+  -> HintFactoryModel
+update_hint_factory = undefined
 
 
--- Generate one hint using the generic Hint service.
-getSuggestion :: State -> Model -> Maybe Advice
-getSuggestion = hint
+-- Runs the fitted state-based or state-free Random Forest classifier.
+predict_help_need :: HelpNeedPredictor -> HelpNeedInput -> Bool
+predict_help_need = undefined
 
 
--- Generate hints for several task states.
-trajectoryHints :: [State] -> Model -> [(State, Maybe Advice)]
-trajectoryHints = hint_batch
+instance Model HintFactoryModel Transition where
+  initModel =
+    HintFactoryModel
+      { bestNext = Map.empty
+      , globalQuality = Map.empty
+      , helpNeedPredictor = HelpNeedPredictor
+      }
+
+  update =
+    update_hint_factory
+
+
+-- Generates a Hint Factory suggestion for a historically known state.
+instance GenerateHint State HintFactoryModel Advice where
+  generate_hint state model =
+    Map.lookup state (bestNext model)
+
+
+-- Provides a proactive hint only when the HelpNeed predictor requests one.
+proactive_hint
+  :: HelpNeedInput
+  -> State
+  -> HintFactoryModel
+  -> Maybe Advice
+proactive_hint input state model
+  | predict_help_need (helpNeedPredictor model) input =
+      hint state model
+  | otherwise =
+      Nothing
+
+
+service_hint :: State -> HintFactoryModel -> Maybe Advice
+service_hint = hint
