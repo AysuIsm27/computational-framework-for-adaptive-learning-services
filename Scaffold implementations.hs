@@ -1,47 +1,71 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module ScaffoldImplementations where
 
+import Model
 import Scaffold
 
 
+first :: [a] -> Maybe a
+first (value : _) = Just value
+first [] = Nothing
 
+
+maybe_to_list :: Maybe a -> [a]
+maybe_to_list (Just value) = [value]
+maybe_to_list Nothing = []
+
+
+-- | =======================================================================
 -- | 1. Razzaq & Heffernan -- Task Decomposition
-
+-- | =======================================================================
 -- | Razzaq, L., & Heffernan, N. T. (2006).
--- | Scaffolding vs. hints in the Assistment System.
+-- | Scaffolding vs. Hints in the Assistment System.
 -- |
--- | Breaks a difficult task into smaller steps and provides support
--- | when the learner has difficulty.
+-- | After an incorrect response, the scaffold condition asks authored
+-- | subquestions. The hint condition provides equivalent information on
+-- | request.
+
+data SupportCondition
+  = ScaffoldCondition
+  | HintCondition
+  deriving (Eq, Show)
+
 
 data Item = Item
-  { itemId    :: Int
-  , itemText  :: String
+  { itemId :: Int
+  , itemText :: String
   , itemHints :: [String]
-  } deriving (Show, Eq)
+  } deriving (Eq, Show)
+
 
 data Answer = Answer
-  { answeredItem  :: Int
+  { answeredItem :: Int
   , answerCorrect :: Bool
-  } deriving (Show, Eq)
+  } deriving (Eq, Show)
+
 
 data DecompositionTask = DecompositionTask
-  { currentItem  :: Item
-  , subItems     :: [Item]
-  , hintAsked    :: Bool
+  { currentItem :: Item
+  , subItems :: [Item]
+  , supportCondition :: SupportCondition
+  , hintRequested :: Bool
   , taskMessages :: [String]
-  } deriving (Show, Eq)
+  } deriving (Eq, Show)
+
 
 data DecompositionModel = DecompositionModel
   { answerHistory :: [Answer]
   } deriving (Show)
 
-data Step
+
+data DecompositionSupport
   = SubItem Item
   | Hint String
-  deriving (Show, Eq)
+  deriving (Eq, Show)
 
 
--- Model: records the learner's answers.
 instance Model DecompositionModel Answer where
   initModel =
     DecompositionModel []
@@ -52,49 +76,69 @@ instance Model DecompositionModel Answer where
 
 latestAnswer :: Item -> DecompositionModel -> Maybe Answer
 latestAnswer item model =
-  case filter ((== itemId item) . answeredItem)
-              (answerHistory model) of
-    (a:_) -> Just a
-    []    -> Nothing
+  first
+    [ answer
+    | answer <- answerHistory model
+    , answeredItem answer == itemId item
+    ]
 
 
--- Available scaffolds: smaller task steps and hints.
-instance AvailableScaffolds DecompositionTask DecompositionModel Step where
+instance
+  AvailableScaffolds
+    DecompositionTask
+    DecompositionModel
+    DecompositionSupport
+  where
   available_scaffolds task _ =
-       [ SubItem i | i <- subItems task ]
-    ++ [ Hint h    | h <- itemHints (currentItem task) ]
+    case supportCondition task of
+      ScaffoldCondition ->
+        [ SubItem item | item <- subItems task ]
+      HintCondition ->
+        [ Hint text | text <- itemHints (currentItem task) ]
 
 
--- Selects support after an incorrect answer.
-contingency_decomposition
+select_decomposition_support
   :: DecompositionTask
   -> DecompositionModel
-  -> [Step]
-  -> Maybe Step
-contingency_decomposition task model available =
+  -> [DecompositionSupport]
+  -> Maybe DecompositionSupport
+select_decomposition_support task model available =
   case latestAnswer (currentItem task) model of
-    Just a | not (answerCorrect a) ->
-      if hintAsked task
-        then first [ h | h@(Hint _) <- available ]
-        else first [ s | s@(SubItem _) <- available ]
-
+    Just answer
+      | not (answerCorrect answer) ->
+          case supportCondition task of
+            ScaffoldCondition ->
+              first
+                [ support
+                | support@(SubItem _) <- available
+                ]
+            HintCondition
+              | hintRequested task ->
+                  first
+                    [ support
+                    | support@(Hint _) <- available
+                    ]
+              | otherwise ->
+                  Nothing
     _ ->
       Nothing
 
 
--- Applies the selected support to the task.
-apply_decomposition :: Step -> DecompositionTask -> DecompositionTask
-apply_decomposition (SubItem item) task =
+apply_decomposition_support
+  :: DecompositionSupport
+  -> DecompositionTask
+  -> DecompositionTask
+apply_decomposition_support (SubItem item) task =
   task
     { currentItem = item
-    , subItems    = filter (/= item) (subItems task)
-    , hintAsked   = False
+    , subItems = filter (/= item) (subItems task)
+    , hintRequested = False
     }
 
-apply_decomposition (Hint h) task =
+apply_decomposition_support (Hint text) task =
   task
-    { taskMessages = taskMessages task ++ [h]
-    , hintAsked    = False
+    { taskMessages = taskMessages task ++ [text]
+    , hintRequested = False
     }
 
 
@@ -103,49 +147,65 @@ service_decomposition
   -> DecompositionModel
   -> DecompositionTask
 service_decomposition task model =
-  scaffold contingency_decomposition apply_decomposition task model
+  scaffold
+    select_decomposition_support
+    apply_decomposition_support
+    task
+    model
 
 
-
--- | 2. Sao Pedro et al. -- Adaptive Task Scaffolding
-
+-- | =======================================================================
+-- | 2. Sao Pedro et al. -- Scaffold-aware BKT
+-- | =======================================================================
 -- | Sao Pedro, M., Baker, R., & Gobert, J. (2013).
--- | Incorporating scaffolding and tutor context into Bayesian knowledge
--- | tracing to predict inquiry skill acquisition.
+-- | Incorporating Scaffolding and Tutor Context into Bayesian Knowledge
+-- | Tracing to Predict Inquiry Skill Acquisition.
 -- |
--- | Provides increasingly specific support when an inquiry skill
--- | is not demonstrated.
+-- | The inquiry-skill detector determines when support is available. The
+-- | learner-model update records whether scaffolding occurred and the tutor
+-- | context in which the skill was demonstrated.
 
 type Skill = String
 
+
+data Topic
+  = PhaseChange
+  | FreeFall
+  deriving (Eq, Show)
+
+
 data InquiryTask = InquiryTask
-  { inquirySkill      :: Skill
+  { inquirySkill :: Skill
   , skillDemonstrated :: Bool
-  , supportLevel      :: Int
-  , supportEnabled    :: Bool
-  , scaffoldLines     :: [(Int, String)]
-  , agentMessages     :: [String]
-  } deriving (Show, Eq)
+  , supportEnabled :: Bool
+  , scaffoldMessage :: String
+  , agentMessages :: [String]
+  } deriving (Eq, Show)
+
 
 data Opportunity = Opportunity
-  { opportunitySkill  :: Skill
-  , opportunityShown  :: Bool
-  , opportunityHelped :: Bool
-  } deriving (Show, Eq)
+  { opportunitySkill :: Skill
+  , opportunityShown :: Bool
+  , opportunityScaffolded :: Bool
+  , opportunityTopic :: Topic
+  , opportunityTopicSwitch :: Bool
+  } deriving (Eq, Show)
+
 
 data InquiryModel = InquiryModel
   { masteryEstimates :: [(Skill, Double)]
   } deriving (Show)
 
-data AgentTurn = AgentTurn
-  { turnLevel :: Int
-  , turnText  :: String
-  } deriving (Show, Eq)
+
+newtype AgentTurn = AgentTurn
+  { turnText :: String
+  } deriving (Eq, Show)
 
 
--- Updates the learner model using extended BKT.
-update_extended_bkt :: Opportunity -> InquiryModel -> InquiryModel
-update_extended_bkt = undefined
+-- Updates the learner model using the paper's scaffold- and
+-- context-conditioned BKT model.
+updateExtendedBKT :: Opportunity -> InquiryModel -> InquiryModel
+updateExtendedBKT = undefined
 
 
 instance Model InquiryModel Opportunity where
@@ -153,110 +213,102 @@ instance Model InquiryModel Opportunity where
     InquiryModel []
 
   update =
-    update_extended_bkt
+    updateExtendedBKT
 
 
--- Available scaffolds: authored support at different levels.
 instance AvailableScaffolds InquiryTask InquiryModel AgentTurn where
-  available_scaffolds task _ =
-    [ AgentTurn level text
-    | (level, text) <- scaffoldLines task
-    ]
+  available_scaffolds task _
+    | supportEnabled task && not (skillDemonstrated task) =
+        [AgentTurn (scaffoldMessage task)]
+    | otherwise =
+        []
 
 
--- Selects the next support level when the skill is not demonstrated.
-contingency_inquiry
+select_inquiry_support
   :: InquiryTask
   -> InquiryModel
   -> [AgentTurn]
   -> Maybe AgentTurn
-contingency_inquiry task _ available
-  | not (supportEnabled task) =
-      Nothing
-
-  | skillDemonstrated task =
-      Nothing
-
-  | otherwise =
-      first
-        [ turn
-        | turn <- available
-        , turnLevel turn == supportLevel task + 1
-        ]
+select_inquiry_support _ _ =
+  first
 
 
--- Applies the selected scaffold.
-apply_inquiry :: AgentTurn -> InquiryTask -> InquiryTask
-apply_inquiry turn task =
+apply_inquiry_support :: AgentTurn -> InquiryTask -> InquiryTask
+apply_inquiry_support turn task =
   task
-    { supportLevel  = turnLevel turn
-    , agentMessages = agentMessages task ++ [turnText turn]
+    { agentMessages =
+        agentMessages task ++ [turnText turn]
     }
 
 
-service_inquiry
-  :: InquiryTask
-  -> InquiryModel
-  -> InquiryTask
+service_inquiry :: InquiryTask -> InquiryModel -> InquiryTask
 service_inquiry task model =
-  scaffold contingency_inquiry apply_inquiry task model
+  scaffold
+    select_inquiry_support
+    apply_inquiry_support
+    task
+    model
 
 
-
-
+-- | =======================================================================
 -- | 3. Wambsganss et al. -- Dialog Scaffolding
-
+-- | =======================================================================
 -- | Wambsganss, T., Kueng, T., Soellner, M., & Leimeister, J. M. (2021).
--- | ArgueTutor: An adaptive dialog-based learning system for
--- | argumentation skills.
+-- | ArgueTutor: An Adaptive Dialog-Based Learning System for
+-- | Argumentation Skills.
 -- |
--- | Analyses the learner's writing and provides adaptive dialog support.
+-- | A trained argument-mining model identifies claims and premises. Adaptive
+-- | feedback and dialog responses become candidate scaffolds.
 
 data ArgumentLabel
   = Claim
   | Premise
   | NonArgumentative
-  deriving (Show, Eq)
+  deriving (Eq, Show)
+
 
 data Segment = Segment
-  { segmentText  :: String
+  { segmentText :: String
   , segmentLabel :: ArgumentLabel
-  } deriving (Show, Eq)
+  } deriving (Eq, Show)
 
-newtype Revision =
-  Revision String
-  deriving (Show, Eq)
+
+newtype Revision = Revision String
+  deriving (Eq, Show)
+
 
 data DialogModel = DialogModel
   { learnerSegments :: [Segment]
   } deriving (Show)
 
-data DialogTask = DialogTask
-  { learnerText      :: String
-  , learnerUtterance :: String
-  , dialogMessages   :: [String]
-  } deriving (Show, Eq)
 
-data Move
+data DialogTask = DialogTask
+  { learnerText :: String
+  , learnerUtterance :: String
+  , dialogMessages :: [String]
+  } deriving (Eq, Show)
+
+
+data DialogSupport
   = ArgumentFeedback String
   | Theory String
   | DialogResponse String
-  deriving (Show, Eq)
+  deriving (Eq, Show)
 
 
--- Analyses argumentative text using a BERT-style classifier.
-analyse_argument :: String -> [Segment]
-analyse_argument = undefined
+-- Analyses argumentative text using the trained argument-mining model.
+analyseArgument :: String -> [Segment]
+analyseArgument = undefined
 
 
--- Produces adaptive feedback from the learner model.
-argument_feedback :: DialogModel -> [Move]
-argument_feedback = undefined
+-- Produces adaptive feedback from the classified argument components.
+argumentFeedback :: DialogModel -> [DialogSupport]
+argumentFeedback = undefined
 
 
--- Produces a response using dialogue-intent classification.
-dialog_response :: String -> Maybe Move
-dialog_response = undefined
+-- Produces a response using the trained dialog-intent model.
+dialogResponse :: String -> Maybe DialogSupport
+dialogResponse = undefined
 
 
 instance Model DialogModel Revision where
@@ -264,56 +316,40 @@ instance Model DialogModel Revision where
     DialogModel []
 
   update (Revision text) model =
-    model { learnerSegments = analyse_argument text }
+    model { learnerSegments = analyseArgument text }
 
 
--- Available scaffolds: feedback and dialog guidance.
-instance AvailableScaffolds DialogTask DialogModel Move where
+instance AvailableScaffolds DialogTask DialogModel DialogSupport where
   available_scaffolds task model =
-       argument_feedback model
-    ++ maybeToList (dialog_response (learnerUtterance task))
+    argumentFeedback model
+      ++ maybe_to_list (dialogResponse (learnerUtterance task))
 
 
--- Selects the first available dialog support.
-contingency_dialog
+select_dialog_support
   :: DialogTask
   -> DialogModel
-  -> [Move]
-  -> Maybe Move
-contingency_dialog _ _ =
+  -> [DialogSupport]
+  -> Maybe DialogSupport
+select_dialog_support _ _ =
   first
 
 
--- Adds the selected support to the dialog.
-apply_dialog :: Move -> DialogTask -> DialogTask
-apply_dialog move task =
+apply_dialog_support :: DialogSupport -> DialogTask -> DialogTask
+apply_dialog_support support task =
   task
     { dialogMessages =
-        dialogMessages task ++ [render move]
+        dialogMessages task ++ [render support]
     }
   where
-    render (ArgumentFeedback s) = s
-    render (Theory s)           = s
-    render (DialogResponse s)   = s
+    render (ArgumentFeedback text) = text
+    render (Theory text) = text
+    render (DialogResponse text) = text
 
 
-service_dialog
-  :: DialogTask
-  -> DialogModel
-  -> DialogTask
+service_dialog :: DialogTask -> DialogModel -> DialogTask
 service_dialog task model =
-  scaffold contingency_dialog apply_dialog task model
-
-
-
--- | Helpers
-
-
-first :: [a] -> Maybe a
-first (x:_) = Just x
-first []    = Nothing
-
-
-maybeToList :: Maybe a -> [a]
-maybeToList (Just x) = [x]
-maybeToList Nothing  = []
+  scaffold
+    select_dialog_support
+    apply_dialog_support
+    task
+    model
