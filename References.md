@@ -2,7 +2,7 @@
 
 Full citations for the papers in **Table: Learner modeling services, data components, and models used**. Every cited paper describes an adaptive system.
 
-References are grouped by service, in the same order as the table. Citations follow APA 7th edition. DOIs are linked where available.
+
 
 ## Contents
 
