@@ -59,9 +59,7 @@ data HintFactoryModel = HintFactoryModel
   } deriving (Eq, Show)
 
 
--- Builds or updates the historical Hint Factory interaction network and state
--- values. This remains a research-boundary placeholder, like the fitted model
--- operations in RecommendImplementations.
+
 update_hint_factory
   :: Transition
   -> HintFactoryModel
@@ -69,7 +67,7 @@ update_hint_factory
 update_hint_factory = undefined
 
 
--- Runs the fitted state-based or state-free Random Forest classifier.
+
 predict_help_need :: HelpNeedPredictor -> HelpNeedInput -> Bool
 predict_help_need = undefined
 
